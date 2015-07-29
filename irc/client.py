@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import re
 import socket
 import threading
 import struct
@@ -18,6 +17,7 @@ import features
 #import strings
 import buffer
 import events
+import ircregex
 
 log = logg.getLogger(__name__)
 
@@ -56,9 +56,7 @@ class IRCBase(object):
 
         Ejemplo:
             >>> server = IRCBase('local', 'localhost', 6667, False, (False,), \
-                             'UserBot', 'bot', (False,), False)
-
-
+                    'UserBot', 'bot', (False,), False)
         """
 
         self.name = name
@@ -88,6 +86,14 @@ class ServerConnection:
     connected = False
     stop_threads = False
     sleep_time = 0
+    last_time = 0
+    # Cargamos los handlers globales de la configuración..
+    global_handlers = config.obtconfig('global_handlers')
+
+    # Esto es por si acaso es su primera vez en iniciar D:
+    # Bienvenido al mundo JAJAJ xD
+    if global_handlers is None:
+        global_handlers = {}
 
     def __init__(self, base):
         """
@@ -100,6 +106,14 @@ class ServerConnection:
         self.features = features.FeatureSet()
         self.base = base
         self.threads = {}
+
+        # Cargando los handlers locales D:
+        self.local_handlers = config.obtconfig('local_handlers')
+
+        # Solo por si es su primera vez xD
+        if self.local_handlers is None:
+            self.local_handlers = {}
+
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def connect(self):
@@ -125,6 +139,7 @@ class ServerConnection:
             log.error(traceback.format_exc().splitlines().pop())
         else:
             log.info('Ahora registrándose...')
+            self.connected = True
 
         # Procesando la salida y entrada de datos.
         self.endless_process(start=(True, 'input', 'output'))
@@ -169,3 +184,58 @@ class ServerConnection:
             if 'output' in start:
                 self.threads.update({'output':
                 threading.Thread(target=self.output, name='Output Data')})
+
+    def input(self):
+        "read and process input from self.socket"
+        plaintext = config.obtconfig('plaintext')
+
+        while self.connected is True:
+            try:
+                for line in self.socket.recv(4028).splitlines():
+                    self._process_line(line)
+
+                    # Registrando cada linea
+                    if plaintext:
+                        log.debug('RECV FROM %s: %s' % (self.base.name, line))
+            except socket.error:
+                # The server hung up.
+                self.disconnect("Connection reset by peer")
+                return
+
+    def _process_line(self, line):
+        """
+        Procesa una linea, y retorna lo procesado.
+        """
+        match_result = ircregex._irc_regex_base(line)
+
+        # Procesando los handlers locales...
+        for priority in self.local_handler.keys().sort():
+            for handler in self.local_handlers[priority]:
+                handler(self, match_result)
+
+        # Procesando los handlers globales...
+        for priority in self.global_handlers.keys().sort():
+            for handler in self.global_handlers[priority]:
+                handler(self, match_result)
+
+    def add_handler(self, function, priority, name):
+        """
+        Añadir handler, ya sea, local o global
+        Argumentos:
+            function -- Funcion a ejecutar
+            priority -- Prioridad con la que se ejecutara.
+            name -- Tipo de handler a añadir (global o local)
+        """
+
+        assert name not in ('global', 'local')
+        var = eval('self.%s_handlers' % name)
+
+        if priority not in var:
+            var.update({priority: []})
+
+        var[priority].append(function)
+        config.upconfig(name + '_handlers', var)
+        log.info('handler %s añadido ' % (name, function.__name__))
+
+    def remove_handler(self, function, name):
+        pass
