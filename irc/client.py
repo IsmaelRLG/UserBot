@@ -306,13 +306,8 @@ class ServerConnection:
             self.stop_threads = stop
 
         if start:
-            if 'input' in start:
-                self.threads.update({'input':
-                threading.Thread(target=self.input, name='Input Data')})
-
-            if 'output' in start:
-                self.threads.update({'output':
-                threading.Thread(target=self.output, name='Output Data')})
+            self.threads.update({'input':
+            threading.Thread(target=self.input, name='Input Data')})
 
     def info(self, server=""):
         """Send an INFO command."""
