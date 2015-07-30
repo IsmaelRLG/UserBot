@@ -688,8 +688,3 @@ class NickMask(six.text_type):
         nick, sep, userhost = self.partition("!")
         user, sep, host = userhost.partition('@')
         return user or None
-
-
-def _ping_ponger(connection, event):
-    "A global handler for the 'ping' event"
-    connection.pong(event.target)
