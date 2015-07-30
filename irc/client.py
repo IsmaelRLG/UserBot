@@ -12,12 +12,11 @@ import time
 
 import logg
 import config
-import schedule
 import features
-#import strings
-import buffer
 import events
 import ircregex
+
+from util import always_iterable
 
 log = logg.getLogger(__name__)
 
@@ -617,6 +616,7 @@ def ip_numstr_to_quad(num):
     bytes = struct.unpack('BBBB', packed)
     return ".".join(map(str, bytes))
 
+
 def ip_quad_to_numstr(quad):
     """
     Convert an IP address string (e.g. '192.168.0.1') to an IP
@@ -628,6 +628,7 @@ def ip_quad_to_numstr(quad):
     bytes = map(int, quad.split("."))
     packed = struct.pack('BBBB', *bytes)
     return str(struct.unpack('>L', packed)[0])
+
 
 class NickMask(six.text_type):
     """
@@ -687,6 +688,7 @@ class NickMask(six.text_type):
         nick, sep, userhost = self.partition("!")
         user, sep, host = userhost.partition('@')
         return user or None
+
 
 def _ping_ponger(connection, event):
     "A global handler for the 'ping' event"
