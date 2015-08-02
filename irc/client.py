@@ -11,11 +11,11 @@ import traceback
 import time
 
 import logg
-import config
 import features
 import events
 import ircregex
 
+from config import core as config
 from util import always_iterable
 
 log = logg.getLogger(__name__)
@@ -536,7 +536,7 @@ class output(object):
     """
     Clase sencilla para procesar la salida de una o mas conexiones.
     """
-    thread_initiated = []
+    thread = []
 
     def __init__(self):
         # Solo uno xD
@@ -547,21 +547,24 @@ class output(object):
         self.newthread()
 
     def begun(self):
-        return self.thread.isAlive()
+        return self.thread[0].isAlive()
 
     def start(self):
         if self.begun():
             return log.error('¡La salida de datos ya esta iniciada!')
-        self.thread.start()
-        log.info('Salida de datos inciada!')
+        self.thread[0].start()
+        log.info('Salida global de datos inciada!')
 
     def process_queue(self):
         """
         Procesando el queue de salida.
         """
 
-        while not self.stop:
+        while self._stop is False:
             out = buffer_output.get()
+            if out == 0:  # Saliendo! D:
+                break
+
             # According to the RFC http://tools.ietf.org/html/rfc2812#page-6,
             # clients should not transmit more than 512 bytes.
             if len(out['msg']) > 507:
@@ -575,6 +578,7 @@ class output(object):
             else:
                 log.info('SEND TO %s: %s' % (out['servername'], out['msg']))
                 time.sleep(config.obtconfig('mps'))
+        log.warning('¡Se detuvo la salida de datos!')
 
     def stop(self):
         if not self.begun():
@@ -583,14 +587,23 @@ class output(object):
         self._stop = True
         time.sleep(10)
 
+        if self.begun() is True:  # Oh no!! D: Sigue vivo!
+            buffer_output.put(0)
+            time.sleep(10)
+
         # Reset
         self._stop = False
 
     def newthread(self):
-        if self.begun():
-            return
+        try:
+            if self.begun():
+                return
+            self.thread.pop()
+        except IndexError:
+            pass
 
-        self.thread = threading.Thread(target=self.process_queue, name='Output')
+        self.thread.append(threading.Thread(target=self.process_queue,
+                                            name='Output'))
 
 
 def is_channel(string):
