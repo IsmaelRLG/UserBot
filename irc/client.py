@@ -57,8 +57,9 @@ class IRCBase(object):
         * code -- Juego de caracteres.
 
         Ejemplo:
-            >>> server = IRCBase('local', 'localhost', 6667, False, (False,), \
-                    'UserBot', 'bot', (False,), False)
+            >>> IRCBase('local', 'localhost', 6667, False, (False,), 'UserBot',
+                        'botito', (False,), False)
+
         """
 
         self.name = name
@@ -120,7 +121,7 @@ class ServerConnection:
         """
         Procesa una linea, y agrega al Queue lo procesado.
         """
-        match_result = ircregex._irc_regex_base(line)
+        match_result = ircregex._irc_regex_base.match(line)
         if match_result.group('nickname'):
             Mask = NickMask(match_result.group('machine'))  # lint:ok
         else:
@@ -129,7 +130,10 @@ class ServerConnection:
         # Eventos D:
         if match_result.group('int'):
             int = match_result.group('int')  # lint:ok
-            numeric_event = (int, events.numeric[int])  # lint:ok
+            if int in events.numeric:
+                numeric_event = (int, events.numeric[int])  # lint:ok
+            else:
+                numeric_event = (int,)  # lint:ok
             del int
         else:
             string_event = match_result.group('str')  # lint:ok
@@ -166,14 +170,20 @@ class ServerConnection:
         buffer_input.put(vars())
 
         # Procesando los handlers locales...
-        for priority in self.local_handler.keys().sort():
-            for handler in self.local_handlers[priority]:
-                handler(vars())
+        try:
+            for priority in self.local_handlers.keys().sort():
+                for handler in self.local_handlers[priority]:
+                    handler(vars())
+        except TypeError:
+            pass
 
         # Procesando los handlers globales...
-        for priority in self.global_handlers.keys().sort():
-            for handler in self.global_handlers[priority]:
-                handler(vars())
+        try:
+            for priority in self.global_handlers.keys().sort():
+                for handler in self.global_handlers[priority]:
+                    handler(vars())
+        except TypeError:
+            pass
 
     def action(self, target, action):
         """Send a CTCP ACTION command."""
@@ -307,6 +317,7 @@ class ServerConnection:
         if start:
             self.threads.update({'input':
             threading.Thread(target=self.input, name='Input Data')})
+            self.threads['input'].start()
 
     def info(self, server=""):
         """Send an INFO command."""
@@ -316,10 +327,15 @@ class ServerConnection:
         "read and process input from self.socket"
         plaintext = config.obtconfig('plaintext')
 
+        log.debug('La entrada de datos de %s se ha iniciado.' % self.base.name)
         while self.connected is True:
             try:
                 for line in self.socket.recv(4028).splitlines():
-                    self._process_line(line)
+                    try:
+                        self._process_line(line)
+                    except AttributeError:
+                        for err in traceback.format_exc().splitlines():
+                            log.error(err)
 
                     # Registrando cada linea
                     if plaintext:
@@ -328,6 +344,7 @@ class ServerConnection:
                 # The server hung up.
                 self.disconnect("Connection reset by peer")
                 return
+        log.warning('¡Se detuvo la entrada de datos de %s!' % self.base.name)
 
     def invite(self, nick, channel):
         """Send an INVITE command."""
@@ -471,7 +488,7 @@ class ServerConnection:
         buffer_output.put({
             'msg': string,
             'socket': self.socket,
-            'servername': self.name,
+            'servername': self.base.name,
             'disconnect': self.disconnect})
 
     def squit(self, server, comment=""):
@@ -560,6 +577,7 @@ class output(object):
         Procesando el queue de salida.
         """
 
+        plaintext = config.obtconfig('plaintext')
         while self._stop is False:
             out = buffer_output.get()
             if out == 0:  # Saliendo! D:
@@ -576,7 +594,10 @@ class output(object):
                 # Ouch!
                 out['disconnect']("Connection reset by peer.")
             else:
-                log.info('SEND TO %s: %s' % (out['servername'], out['msg']))
+                if plaintext:
+                    log.info('SEND TO %s: %s' % (out['servername'], out['msg']))
+
+                # Messages per seconds
                 time.sleep(config.obtconfig('mps'))
         log.warning('¡Se detuvo la salida de datos!')
 
