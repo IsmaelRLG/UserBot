@@ -103,7 +103,7 @@ class ownbot(object):
            Argumentos:
                string -- Cadena a convertir a hash."""
 
-        return __hash__(string).hexdigest()
+        return self.__hash__(string).hexdigest()
 
     def insert(self, table, element, values='', tmp=False, commit=True):
         """
