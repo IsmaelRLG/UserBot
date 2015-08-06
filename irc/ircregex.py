@@ -12,5 +12,4 @@ SUPER_REGEX = (
 # Compilando la super expresion xD
 _irc_regex_base = re.compile(SUPER_REGEX)
 
-_cmd_pat = "^(:(?P<prefix>[^ ]+) +)?(?P<command>[^ ]+)( *(?P<argument> .+))?"
-_rfc_1459_command_regexp = re.compile(_cmd_pat)
+cmd = '(?P<prefix>(\W|(%s[:,]?) ?))(?P<command>[^ ]+)( *(?P<argument> .+))?'
