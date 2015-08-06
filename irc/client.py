@@ -90,13 +90,7 @@ class ServerConnection:
     stop_threads = False
     sleep_time = 0
     last_time = 0
-    # Cargamos los handlers globales de la configuración..
-    global_handlers = config.obtconfig('global_handlers')
-
-    # Esto es por si acaso es su primera vez en iniciar D:
-    # Bienvenido al mundo JAJAJ xD
-    if global_handlers is None:
-        global_handlers = {}
+    global_handlers = {}
 
     def __init__(self, base):
         """
