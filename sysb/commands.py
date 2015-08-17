@@ -24,7 +24,7 @@ class commands:
     if locks is None:
         locks = {}
 
-    def addHandler(self, cname, csintax, chelp, cregex, privs, func, modname
+    def addHandler(self, cname, csintax, chelp, cregex, privs, func, modname,
                    listenonly=''):
         """
         Añade un handler al bot (commanditos :3)
@@ -149,5 +149,3 @@ class commands:
             if not name in self.modules:
                 self.modules[name] = imp.find_module(name)
                 log.debug('Nuevo modulo encontrado "%s"' % name)
-
-    def
