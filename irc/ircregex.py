@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import re
+from util import remove_from_dict as rm
 
 # RFC 2812          Internet Relay Chat: Client Protocol
 # Numeric Replies: Command responses
+
+ALL = {}
+NOT = ['ALL', 'NOT', 'BASE', '_', 'RPL_ALL', 'ERR_ALL', 'rm']
 
 # Base of all, bueno, casi todo..
 BASE = ':?(?P<machine>[^ ]+)'
@@ -53,6 +56,7 @@ RPL_LIST = (_('322') + "(?P<channel>[^ ]+) (?P<total_user>[^ ]+) "
     ":(\[(?P<modes>.+)\] )?(?P<topic>.*)")
 RPL_LISTEND = _('323') + ':End of /?LIST(\.)?'
 RPL_CHANNELMODEIS = _('324') + '(?P<channel>[^ ]+) (?P<modes>.+)'
+RPL_WHOISLOGGED = _('330') + '(?P<username>[^ ]+) (?P<account>[^ ]+) :is logged in as'
 RPL_NOTOPIC = _('331') + '(?P<channel>[^ ]+) :No topic is set(\.)?'
 RPL_TOPIC = _('332') + '(?P<channel>[^ ]+) :(?P<topic>.*)'
 RPL_INVITING = _('341') + '(?P<nick>[^ ]+) (?P<channel>[^ ]+)'
@@ -88,6 +92,9 @@ RPL_MOTDSTART = _('375') + ':- (?P<server>[^ ]+) Message of the day - '
 RPL_MOTD = _('372') + ':- (?P<text>.*)'
 RPL_ENDOFMOTD = (_('376') + ":(End of /?MOTD command(\.)?|"
     "End of message of the day(\.)?)")
+
+RPL_ALL = rm(vars(), NOT)
+ALL.update(RPL_ALL)
 
 # Error Replies
 
@@ -155,3 +162,36 @@ ERR_CHANOPRIVSNEEDED = (_('482') +
     "(?P<channel>[^ ]+) :You're not channel operator")
 ERR_STD = (_('|'.join(['409', '412', '424', '431', '44[56]', '451', '46[2-5]',
     '481', '48[3-5', '491', '50[12]'])) + ':(?P<text>.*)')
+
+ERR_ALL = rm(rm(vars(), NOT), ALL.keys())
+ALL.update(ERR_ALL)
+
+
+def _(string):
+    return (':((?P<nick>.+)!(?P<user>.+)@(?P<host>[^ ]+)|'
+            '(?P<machine>[^ ]+)) %s ' % string)
+
+# Operation messages
+
+JOIN = _('JOIN') + '(?P<channel>[^ ]+)'
+PART = _('PART') + '(?P<channel>[^ ]+)( :(?P<message>.*))?'
+MODE = _('MODE') + '(?P<target>[^ ]+) (?P<mode>[^ ]+) (?P<victims>.*)'
+KICK = _('KICK') + '(?P<channel>[^ ]+) (?P<victim>[^ ]+) :(?P<message>.*)'
+QUIT = _('QUIT') + ':(?P<message>.*)'
+NICK = _('NICK') + ':(?P<new_nick>.*)'
+TOPIC = _('TOPIC') + '(?P<channel>[^ ]+) :(?P<text>.*)?'
+INVITE = _('INVITE') + '(?P<me>[^ ]+) :(?P<channel>[^ ]+)'
+NOTICE = _('NOTICE') + '(?P<target>[^ ]+) :(?P<message>.*)'
+PRIVMSG = _('PRIVMSG') + '(?P<target>[^ ]+) :(?P<message>.*)'
+
+OPMESS = rm(rm(vars(), NOT), ALL.keys())
+ALL.update(OPMESS)
+
+# Miscellaneous messages
+KILL = ''
+PING = 'PING (?P<server1>[^ ]+)( (?P<server2>[^ ]+))?'
+PONG = ''
+ERROR = 'ERROR (?P<message>.*)'
+
+MIMESS = rm(rm(vars(), NOT), ALL.keys())
+ALL.update(MIMESS)

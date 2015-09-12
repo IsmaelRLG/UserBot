@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import sqlite3
-import uuid
 import logg
 
 
@@ -16,11 +15,6 @@ class ownbot(object):
 
     # Base de datos (Temporal, almacenada en la RAM)
     tmp = sqlite3.connect(':memory:', check_same_thread=False).cursor()
-
-    # Encriptado, se usa en este caso: sha256. Cambiar al gusto.
-    __hash__ = __import__('hashlib').sha256
-    __logg.info("Las contraseñas se guardan bajo: " +
-                str(__hash__).split()[2].split('_')[1].replace('>', ''))
 
     # Excepciones
     Error = sqlite3.Error
@@ -98,13 +92,6 @@ class ownbot(object):
         else:
             self.tmp.execute(string)
 
-    def hash(self, string):
-        """Retorna cadena bajo el hash elegido previamente.
-           Argumentos:
-               string -- Cadena a convertir a hash."""
-
-        return self.__hash__(string).hexdigest()
-
     def insert(self, table, element, values='', tmp=False, commit=True):
         """
         Inserta un elemento en una tabla de la base de datos.
@@ -147,10 +134,4 @@ class ownbot(object):
         self.exc('update {0} set {1}{2}'.format(table, value,
             ' where ' + where if where else ''), tmp, commit)
 
-    def uuid(self, string):
-        """
-        Retorna uuid.
-        Argumentos:
-            string -- Cadena a convertir a uuid.
-        """
-        return uuid.uuid5(uuid.NAMESPACE_DNS, string.lower())
+

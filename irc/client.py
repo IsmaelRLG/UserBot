@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import socket
-import threading
 import struct
 import ssl
 import Queue
@@ -9,14 +8,16 @@ import six
 import textwrap
 import traceback
 import time
+import re
 
 import logg
 import features
-import events
 import ircregex
 
 from config import core as config
 from util import always_iterable
+from util import thread
+from util import threads
 
 log = logg.getLogger(__name__)
 
@@ -115,69 +116,48 @@ class ServerConnection:
         """
         Procesa una linea, y agrega al Queue lo procesado.
         """
-        match_result = ircregex._irc_regex_base.match(line)
-        if match_result.group('nickname'):
-            Mask = NickMask(match_result.group('machine'))  # lint:ok
-        else:
-            servername = match_result.group('server')  # lint:ok
 
-        # Eventos D:
-        if match_result.group('int'):
-            int = match_result.group('int')  # lint:ok
-            if int in events.numeric:
-                numeric_event = (int, events.numeric[int])  # lint:ok
-            else:
-                numeric_event = (int,)  # lint:ok
-            del int
-        else:
-            string_event = match_result.group('str')  # lint:ok
+        # Eliminando cosas raras...
+        for round in range(2):
+            if line.endswith('\n') or line.endswith('\r'):
+                line = line.rstrip('\n').rstrip('\r')
 
-        # Mensajito...
-        if match_result.group('message0'):
-            message = match_result.group('message0')
-        elif match_result.group('message1'):
-            message = match_result.group('message1')
-        elif match_result.group('message2'):
-            message = match_result.group('message2')
+        for name, regex in ircregex.ALL.items():
+            match_result = re.match(regex, line, re.IGNORECASE)
+            if match_result is True:
+                # Procesando los handlers globales...
+                if self._process_handler(name, match_result.group, 'global'):
+                    break
 
-        # ¿Donde o quien fue? D:
-        if match_result.group('from0'):
-            _from = match_result.group('from0')
-        elif match_result.group('from1'):
-            _from = match_result.group('from1')  # lint:ok
+                # Procesando los handlers locales...
+                if self._process_handler(name, match_result.group, 'local'):
+                    break
 
-        # ¿Y para quien era? o.O
-        if match_result.group('for'):
-            _for = match_result.group('for')  # lint:ok
+                # Si llego hasta aca es que ningun handler se ejecuto.
+                buffer_input.put((self, name, match_result.group))
+                break
 
-        # O quizas fue un ping o un error?
-        if match_result.group('lol'):
-            other = match_result.group('lol')  # lint:ok
-            # Debe de tener algo mas...
-            message = match_result.group('stupid')  # lint:ok
+    def _process_handler(self, name, method_group, level):
+        assert level in ('global', 'local')
 
-        # ¿Sera algo sin procesar? D: D:
-        if match_result.group('unprocessed'):
-            unprocessed = match_result.group('unprocessed')  # lint:ok
+        # Formateando....
+        S = 'self.{level}_handlers'.format(level=level)
 
-        # Añadimos estos resultados a la cola <3
-        buffer_input.put(vars())
-
-        # Procesando los handlers locales...
         try:
-            for priority in self.local_handlers.keys().sort():
-                for handler in self.local_handlers[priority]:
-                    handler(vars())
+            prt = eval(S + '.keys().sort()')
         except TypeError:
-            pass
+            return
 
-        # Procesando los handlers globales...
-        try:
-            for priority in self.global_handlers.keys().sort():
-                for handler in self.global_handlers[priority]:
-                    handler(vars())
-        except TypeError:
-            pass
+        for priority in prt:
+            for handler in eval(S + '[priority]'):
+                try:
+                    return handler(self, name, method_group)
+                except UnboundLocalError:
+                    continue
+                except:
+                    for line in traceback.format_exc().splitlines():
+                        log.error('%s handler %s: %s' %
+                        (level, handler.func_name, line))
 
     def action(self, target, action):
         """Send a CTCP ACTION command."""
@@ -260,7 +240,7 @@ class ServerConnection:
             self.connected = True
 
         # Procesando la salida y entrada de datos.
-        self.endless_process(start=(True, 'input', 'output'))
+        self.input()
 
         # Logeandonos al servidor (si tiene contraseña claro)
         if self.base.passwd[0]:
@@ -295,28 +275,21 @@ class ServerConnection:
         except socket.error:
             pass
 
-    def endless_process(self, stop=None, start=None):
-        """
-        Inicia o detiene los procesos de entrada de datos.
-        Argumentos:
-            stop -- Detiene los threads especificados
-                sintaxis: stop=bool
-            start -- Inicia los threads especificados
-                sintaxis: start=bool
-        """
+    def err(self, target, msg):
+        self.notice(target, '\2\00312error\3: ' + msg)
 
-        if stop:
-            self.stop_threads = stop
+    def stop_input(self):
+        if not 'input data' in threads:
+            return
 
-        if start:
-            self.threads.update({'input':
-            threading.Thread(target=self.input, name='Input Data')})
-            self.threads['input'].start()
+        if threads['input data'].isAlive():
+            self.stop_threads = True
 
     def info(self, server=""):
         """Send an INFO command."""
         self.send_raw(" ".join(["INFO", server]).strip())
 
+    @thread('input data', 1)
     def input(self):
         "read and process input from self.socket"
         plaintext = config.obtconfig('plaintext')
@@ -551,21 +524,19 @@ class output(object):
 
     def __init__(self):
         # Solo uno xD
-        if len(self.thread) > 0:
+        if 'output data' in threads:
             return
 
         self._stop = False
-        self.newthread()
+        self.process_queue()
 
     def begun(self):
-        return self.thread[0].isAlive()
+        return threads['output data'].isAlive()
 
     def start(self):
-        if self.begun():
-            return log.error('¡La salida de datos ya esta iniciada!')
-        self.thread[0].start()
-        log.info('Salida global de datos inciada!')
+        threads['output data'].start()
 
+    @thread('output data', 0)
     def process_queue(self):
         """
         Procesando el queue de salida.
@@ -608,17 +579,6 @@ class output(object):
 
         # Reset
         self._stop = False
-
-    def newthread(self):
-        try:
-            if self.begun():
-                return
-            self.thread.pop()
-        except IndexError:
-            pass
-
-        self.thread.append(threading.Thread(target=self.process_queue,
-                                            name='Output'))
 
 
 def is_channel(string):
