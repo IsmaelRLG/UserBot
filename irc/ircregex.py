@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from util import remove_from_dict as rm
-
 # RFC 2812          Internet Relay Chat: Client Protocol
 # Numeric Replies: Command responses
-
-ALL = {}
-NOT = ['ALL', 'NOT', 'BASE', '_', 'RPL_ALL', 'ERR_ALL', 'rm']
 
 # Base of all, bueno, casi todo..
 BASE = ':?(?P<machine>[^ ]+)'
@@ -33,11 +28,11 @@ RPL_FEATURELIST = (_('005') + '(?P<feature>.*)'
     '( :are supported by this server)')
 RPL_STATSDLINE = (_('250') + ':Highest connection count: '
     '(?P<client>[^ ]+) \((?P<clients>[^ ]+) clients\)'
-    ' \((?P<connections[^ ]+) connections received\)')
+    ' \((?P<connections>[^ ]+) connections received\)')
 RPL_LUSERCLIENT = (_('251') + ':There are (?P<users>[^ ]+) users and '
     '(?P<integer>[^ ]+) (services|invisible) on (<servers>[^ ]+) servers')
 RPL_LUSEROP = (_('252') + '(?P<num>[^ ]+) :'
-    '(IRC )?[Oo]perator(s|\(s\) online')
+    '(IRC )?operator(s|\(s\)) online')
 RPL_LUSERCHANNELS = _('254') + '(?P<integer>[^ ]+) :channels formed'
 
 RPL_AWAY = _('301') + '(?P<nick>[^ ]+) :(?P<message>.*)'
@@ -63,13 +58,13 @@ RPL_INVITING = _('341') + '(?P<nick>[^ ]+) (?P<channel>[^ ]+)'
 RPL_INVITELIST = (_('346') + "(?P<channel>#[^ ]+) (?P<emask>[^ ]+) "
     "(?P<from>[^ ]+) (?P<date>[^ ]+)")
 RPL_ENDOFINVITELIST = (_('347') + '(?P<channel>#[^ ]+) :'
-    'End of [Cc]hannel [Ii]nvite [Ll]ist')
+    'End of channel invite list')
 RPL_EXCEPTLIST = (_('348') + "(?P<channel>#[^ ]+) (?P<mask>[^ ]+) "
     "(?P<from>[^ ]+) (?P<date>[^ ]+)")
 RPL_ENDOFEXCEPTLIST = (_('349') +
-    "(?P<channel>#[^ ]+):End of [Cc]hannel [Ee]xception [Ll]ist")
+    "(?P<channel>#[^ ]+):End of channel exception [Ll]ist")
 RPL_WHOREPLY = (_('352') + "((?P<channel>#[^ ]+)|\*) (?P<user>[^ ]+) "
-    "(?P<host>[^ ]+) (?P<server>[^ ]+) (?P<nick>[^ ]+) ([HG].+) "
+    "(?P<host>[^ ]+) (?P<server>[^ ]+) (?P<nick>[^ ]+) (?P<status>[HG].+) "
     ":(?P<hopcount>.[0-9]) (?P<realname>.*)")
 RPL_NAMREPLY = _('353') + "(=|\*|@) (?P<channel>#[^ ]+) :(?P<nicks>.*)"
 RPL_LINKS = (_('364') + "(?P<mask>[^ ]+) (?P<server>[^ ]+) :"
@@ -79,7 +74,7 @@ RPL_ENDOFNAMES = _('366') + "(?P<channel>#[^ ]+) :End of /?NAMES list(\.)?"
 RPL_BANLIST = (_('367') + "(?P<channel>#[^ ]+) (?P<mask>[^ ]+) "
     "(?P<from>[^ ]+) (?P<date>[^ ]+)")
 RPL_ENDOFBANLIST = (_('368') + "(?P<channel>#[^ ]+) "
-    ":End of channel [bB]an [lL]ist")
+    ":End of channel ban list")
 RPL_ENDOFWHOWAS = _('369') + "(?P<nick>[^ ]+) :End of /?WHOWAS(\.)?"
 RPL_WHOISMODES = _('379') + "(?P<nick>[^ ]+) :is using modes (?P<modes>.+)"
 RPL_STD = _('|'.join(['30[56]', '381', '39[245]', '242', ])) + ':(?P<text>.*)'
@@ -92,9 +87,6 @@ RPL_MOTDSTART = _('375') + ':- (?P<server>[^ ]+) Message of the day - '
 RPL_MOTD = _('372') + ':- (?P<text>.*)'
 RPL_ENDOFMOTD = (_('376') + ":(End of /?MOTD command(\.)?|"
     "End of message of the day(\.)?)")
-
-RPL_ALL = rm(vars(), NOT)
-ALL.update(RPL_ALL)
 
 # Error Replies
 
@@ -136,8 +128,8 @@ ERR_UNKNOWNCOMMAND = _('422') + "(?P<command>[^ ]+) :Unknown command"
 # Server's MOTD file could not be opened by the server? :O
 ERR_NOMOTD = _('422') + ':(?P<text>.*)'
 
-ERR_ERRONEUSNICKNAME = _('432') + '(?P<nick[^ ]+) :Erroneous Nickname'
-ERR_NICKNAMEINUSE = _('433') + '(?P<nick[^ ]+) :Nickname is already in use'
+ERR_ERRONEUSNICKNAME = _('432') + '(?P<nick>[^ ]+) :Erroneous Nickname'
+ERR_NICKNAMEINUSE = _('433') + '(?P<nick>[^ ]+) :Nickname is already in use'
 ERR_NICKCOLLISION = (_('436') + '(?P<nick>[^ ]+) :Nickname collision KILL '
     'from (?P<user>.+)@(?P<host>.+)')
 ERR_UNAVAILRESOURCE = (_('437') + '(?P<target>[^ ]+) '
@@ -163,9 +155,6 @@ ERR_CHANOPRIVSNEEDED = (_('482') +
 ERR_STD = (_('|'.join(['409', '412', '424', '431', '44[56]', '451', '46[2-5]',
     '481', '48[3-5', '491', '50[12]'])) + ':(?P<text>.*)')
 
-ERR_ALL = rm(rm(vars(), NOT), ALL.keys())
-ALL.update(ERR_ALL)
-
 
 def _(string):
     return (':((?P<nick>.+)!(?P<user>.+)@(?P<host>[^ ]+)|'
@@ -184,14 +173,21 @@ INVITE = _('INVITE') + '(?P<me>[^ ]+) :(?P<channel>[^ ]+)'
 NOTICE = _('NOTICE') + '(?P<target>[^ ]+) :(?P<message>.*)'
 PRIVMSG = _('PRIVMSG') + '(?P<target>[^ ]+) :(?P<message>.*)'
 
-OPMESS = rm(rm(vars(), NOT), ALL.keys())
-ALL.update(OPMESS)
-
 # Miscellaneous messages
 KILL = ''
 PING = 'PING (?P<server1>[^ ]+)( (?P<server2>[^ ]+))?'
 PONG = ''
 ERROR = 'ERROR (?P<message>.*)'
 
-MIMESS = rm(rm(vars(), NOT), ALL.keys())
-ALL.update(MIMESS)
+ALL = vars()
+
+del ALL['_']
+del ALL['BASE']
+del ALL['__builtins__']
+del ALL['__doc__']
+del ALL['__name__']
+del ALL['__file__']
+del ALL['__package__']
+#ALL.update({'ALL': None})
+#del ALL['ALL']
+#del ALL['']

@@ -10,11 +10,11 @@ import traceback
 import time
 import re
 
-import logg
 import features
 import ircregex
 
-from config import core as config
+from sysb import logg
+from sysb.config import core as config
 from util import always_iterable
 from util import thread
 from util import threads
@@ -27,7 +27,7 @@ buffer_output = Queue.Queue()
 
 class IRCBase(object):
 
-    def __init__(self, name, host, port, ssl, passwd, nick, user, sasl, verbose,
+    def __init__(self, name, host, port, ssl, passwd, nick, user, sasl,
                  connect_to_beginning=True, code='UTF-8'):
         """
         Clase base para las conexiones de IRC.
@@ -81,7 +81,6 @@ class IRCBase(object):
         else:
             self.sasl = sasl
 
-        self.verbose = verbose
         self.connect_to_beginning = connect_to_beginning
         self.code = code
 
@@ -123,6 +122,9 @@ class ServerConnection:
                 line = line.rstrip('\n').rstrip('\r')
 
         for name, regex in ircregex.ALL.items():
+            print [name, regex]
+            if name is 'ALL':
+                continue
             match_result = re.match(regex, line, re.IGNORECASE)
             if match_result is True:
                 # Procesando los handlers globales...
@@ -234,7 +236,8 @@ class ServerConnection:
                 self.socket.getpeername()[0],
                 self.base.port))
         except:
-            log.error(traceback.format_exc().splitlines().pop())
+            for line in traceback.format_exc().splitlines():
+                log.error(line)
         else:
             log.info('Ahora registrándose...')
             self.connected = True
@@ -292,7 +295,11 @@ class ServerConnection:
     @thread('input data', 1)
     def input(self):
         "read and process input from self.socket"
-        plaintext = config.obtconfig('plaintext')
+        try:
+            plaintext = config.obtconfig('plaintext')
+        except config.ProgrammingError:
+            time.sleep(2)
+            plaintext = config.obtconfig('plaintext')
 
         log.debug('La entrada de datos de %s se ha iniciado.' % self.base.name)
         while self.connected is True:
@@ -520,7 +527,6 @@ class output(object):
     """
     Clase sencilla para procesar la salida de una o mas conexiones.
     """
-    thread = []
 
     def __init__(self):
         # Solo uno xD

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from config import core as config
+from sysb.config import core as config
 from time import sleep
 import re
 

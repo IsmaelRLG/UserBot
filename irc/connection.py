@@ -2,7 +2,7 @@
 
 import client
 
-from config import core as config
+from sysb.config import core as config
 from handlers import *
 
 import katheryn
@@ -42,4 +42,4 @@ def load_connections():
             SERVER_OBJECTS[base.name].connect()
 
         for channel in chn.channel_list(base.name):
-            eval("SERVER_OBJECTS[base.name].join(%s)" % channel)
+            SERVER_OBJECTS[base.name].join(channel)

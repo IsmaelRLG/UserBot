@@ -126,6 +126,10 @@ class turn(pylocale):
         return self.trs[self.mod].keys()
 
     def turn_tr_str(self, string, lc=None):
+        string = unicode(string.decode('utf-8')).lower()
+        if lc is self.LC_O:
+            return string
+
         if lc is None:
             lc = self.LC_O
         elif not self.tr_aval(self.mod, lc):
@@ -139,7 +143,7 @@ class turn(pylocale):
             else:
                 lc = self.LC_O
 
-        return self.trs[self.mod][lc][unicode(hash(string.lower()))]
+        return self.trs[self.mod][lc][unicode(hash(string))].encode('utf-8')
 
 
 class gettext(pylocale):
@@ -154,19 +158,66 @@ class gettext(pylocale):
             with open(self.conf[mod]['path']) as module:
                 __mod[mod] = module.readlines()
 
-        regx = '(.?){1,}%s( {0,})\((?P<parenthesis>.*)\)'
-
         for mod, lines in __mod.items():
             for line in lines:
-                pt = re.match(regx.replace('%s',
-                                           self.conf[mod]['func']),
-                                           line,
-                                           re.MULTILINE)
-                if pt:
-                    result = eval('[%s]' % pt.group('parenthesis'))
-                    self.add(mod, self.conf[mod]['lc'], result[0])
+                line = line.rstrip('\n')
+                if line.startswith(' ') or line.startswith('\t'):
+                    line = line.strip(' ')
+                    line = line.strip('\t')
+
+                self.conf[mod]['func'] = self.conf[mod]['func'].encode('utf-8')
+
+                while True:
+
+                    posc = line.find(self.conf[mod]['func'])
+                    if posc != -1:
+
+                        line = line[posc:].lstrip(self.conf[mod]['func'])
+                        if line.startswith(' '):
+                            line = line.strip(' ')
+
+                        if line.startswith('('):
+                            line = line.strip('(')
+
+                            posc_ = line.find(')')
+                            if posc_ != -1:
+                                line = line[:posc_]
+                                if line in vars().keys():
+                                    break
+
+                                try:
+                                    try:
+                                        line = eval(line)[0].encode('utf-8')
+                                    except UnicodeDecodeError:
+                                        line = line.decode('utf-8')
+                                        #line = line.encode('utf-8')
+                                    except SyntaxError:
+                                        pass
+
+                                    self.add(mod, self.conf[mod]['lc'], line)
+                                    break
+
+                                except NameError as name:
+                                    name = eval(str(name).split()[1])
+                                    line = line.replace(name, '')
+                                    try:
+                                        line = eval(line)[0]
+                                    except SyntaxError:
+                                        pass
+
+                                    try:
+                                        line = line.encode('utf-8')
+                                    except UnicodeDecodeError:
+                                        line = line.decode('utf-8')
+                                        #line = line.encode('utf-8')
+
+                                    self.add(mod, self.conf[mod]['lc'], line)
+                                    break
+                    else:
+                        break
 
     def add(self, mod, lc, string):
+        print [string]
         if not mod in self.obt:
             self.obt[mod] = {}
 
@@ -222,7 +273,7 @@ class tr(pylocale):
     def tr_to(self, input, output):
         assert input in LC_ALL and output in LC_ALL
 
-        for mod in self.conf:
+        for mod in self.trn:
             log.debug('Trying to translate the module "%s"' % mod)
             if not self.already_translated(mod, input):
                 log.error("the language '%s' source it's not available" %
@@ -238,8 +289,12 @@ class tr(pylocale):
             for id in self.trn[mod][input]:
                 str = self.trn[mod][input][id]  # lint:ok
                 log.debug('translating of %s to %s: %s' % (input, output, str))
-                tr = self.translate(str, input, output)
-                log.debug('translation of %s to: %s' % (input, output, tr))
+                try:
+                    tr = self.translate(str, input, output, n=2)
+                except:
+                    log.warning('used second option of translate!')
+                    tr = self.translate(str, input, output)
+                log.debug('translation of %s to %s: %s' % (input, output, tr))
 
                 if not output in self.trn[mod]:
                     self.trn[mod][output] = {}
@@ -249,3 +304,7 @@ class tr(pylocale):
 
     def _save(self):
         self.save(self.filename, self.trn)
+
+
+def parsename(string):
+    return string.split('.').pop()

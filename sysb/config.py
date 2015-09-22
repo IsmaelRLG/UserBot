@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import os
 import cPickle
 import database
+import traceback
 
 
 class config(database.ownbot):
@@ -20,13 +22,13 @@ class config(database.ownbot):
             _object -- Objeto equis a serializar."""
         self.insert('core', """ "%s", "%s" """ % (name, cPickle.dumps(_object)))
 
-    def delconfig(self, nam):
-        self.delete('core', nam)
+    def delconfig(self, name):
+        self.delete('core', name)
 
-    def obtconfig(self, nam):
+    def obtconfig(self, name):
         try:
             return cPickle.loads(
-            self.select('core', 'pick', 'id="%s"' % nam)[0][0].encode('utf-8'))
+            self.select('core', 'pick', 'id="%s"' % name)[0][0].encode('utf-8'))
         except IndexError:
             pass
 
@@ -35,5 +37,4 @@ class config(database.ownbot):
                     """ pick="%s" """ % cPickle.dumps(_object),
                     "id='%s'" % name)
 
-# Feauture
 core = config()

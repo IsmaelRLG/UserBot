@@ -1,0 +1,92 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import os
+import sys
+import logging
+import traceback
+import subprocess
+
+
+class userbot:
+
+    def __init__(self, dir):
+        self.dir = dir
+
+    def shell(self, command, no_capture=True, no_out=False):
+        logging.debug('shell command: ' + command)
+        if no_capture is True:
+            with open('/tmp/ub_out', 'w') as OutFD:
+                with open('/tmp/ub_err', 'w') as ErrFD:
+                    subprocess.call(command.split(), stdout=OutFD, stderr=ErrFD)
+
+            out = open('/tmp/ub_out', 'r').readlines()
+            err = open('/tmp/ub_err', 'r').readlines()
+
+            # Esto es solo para depurar...
+            if len(err) > 0:
+                if len(err) == 1:
+                    err = err[0].decode('utf-8')
+                logging.error('shell err: %s' % err)
+
+            if not no_out:
+                if len(out) > 0:
+                    if len(out) == 1:
+                        out = out[0].decode('utf-8')
+                    logging.debug('shell out: ' + out)
+
+                if len(out) + len(err) == 0:
+                    logging.debug('shell out: no data output')
+
+            return out, err
+        else:
+            os.system(command)
+
+    def install(self):
+        self.shell('mkdir ' + self.dir, no_out=True)
+        self.shell('cp -R irc ' + self.dir, no_out=True)
+        self.shell('cp -R sysb ' + self.dir, no_out=True)
+        self.shell('cp -R mods ' + self.dir, no_out=True)
+        self.shell('cp -R db ' + self.dir, no_out=True)
+        self.shell('cp LICENSE ' + self.dir, no_out=True)
+        self.shell('cp userbot /usr/bin', no_out=True)
+        self.shell('chmod 777 /usr/bin/userbot', no_out=True)
+        self.shell('chmod 777 -R ' + self.dir, no_out=True)
+
+        try:
+            __import__('coloredlogs')
+        except ImportError:
+            logging.info('intalling depends: coloredlogs')
+            self.shell('pip install coloredlogs', no_capture=False)
+
+        logging.info('userbot install sucefully')
+        logging.info('please use "userbot --config" for configure userbot')
+
+    def logs(self, lvl, saveinfile=False):
+        if saveinfile:
+            logging.basicConfig(filename=os.getcwd(),
+            level=lvl,
+            format="%(asctime)s: %(levelname)s: %(message)s")
+        else:
+            logging.basicConfig(level=lvl, format="%(levelname)s: %(message)s")
+
+
+def main():
+    userbot_ = userbot('/etc/userbot')  # lint:ok
+    if len(sys.argv) >= 2:
+        if sys.argv[1] in ['-d', '--dir']:
+            userbot_.dir = sys.argv[2]
+    userbot_.logs(logging.DEBUG)
+    if os.geteuid() != 0:
+        logging.error('only root! aborting...')
+        exit()
+    userbot_.install()
+
+if __name__ == '__main__':
+    try:
+        main()
+    except SystemExit:
+        pass
+    except:
+        for line in traceback.format_exc().splitlines():
+            logging.error(line)

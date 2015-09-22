@@ -1,4 +1,6 @@
-The MIT License (MIT)
+=======
+license
+=======
 
 Copyright (c) 2015 Ismael R. Lugo G.
 

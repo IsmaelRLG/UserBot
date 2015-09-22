@@ -14,8 +14,8 @@ import katheryn
 from util import thread
 from util import is_channel
 from config import core as config
-from client import buffer_input
-from ircregex import ALL
+from irc.client import buffer_input
+from irc.ircregex import ALL
 
 log = logg.getLogger(__name__)
 

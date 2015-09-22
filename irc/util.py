@@ -4,9 +4,10 @@ from __future__ import absolute_import, print_function, unicode_literals
 import functools
 import struct
 import collections
-import logg
 import uuid as _uuid_
 import six
+
+from sysb import logg
 
 # Encriptado, se usa en este caso: sha256. Cambiar al gusto.
 __hash__ = __import__('hashlib').sha256
@@ -116,16 +117,17 @@ def remove_from_dict(from_, in_):
     """
     Elimina los elementos de un diccionario contenidos en una lista
     """
-    if not isinstance(from_, dict) or isinstance(in_, list):
+    if not isinstance(from_, dict) or not isinstance(in_, list):
         raise TypeError("Not it's dict or list")
 
+    d = {}
+
     for L in in_:
-        if not L in from_:
+        if L in from_:
             continue
+        d.update({L: from_[L]})
 
-        del from_[L]
-
-    return from_
+    return d
 
 
 # Esto no hace mas que indicar cuando se usa la funcion...

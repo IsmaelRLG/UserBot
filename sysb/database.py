@@ -8,7 +8,7 @@ class ownbot(object):
 
     # Se crea la conexion y el cursor de la base de datos
     # Todo gira al rededor de esto!
-    con = sqlite3.connect('db/userbot.db', check_same_thread=False)
+    con = sqlite3.connect('db/userbot', check_same_thread=False)
     cur = con.cursor()
     __logg = logg.getLogger(__name__)
     __logg.info('Se aperturo la base de datos.')
@@ -82,8 +82,8 @@ class ownbot(object):
                           de tipo booleano, valor por default: True"""
 
         # Esto puede ser peligroso xD
-        self.__logg.debug(
-        "SQLite Shell ?> %s, args=(tmp=%s, commit=%s)" % (string, tmp, commit))
+        self.__logg.debug("SQLite Shell ?> %s, args=(tmp=%s, commit=%s)" %
+        (string.replace('\n', '\\n'), tmp, commit))
 
         if not tmp:
             self.cur.execute(string)

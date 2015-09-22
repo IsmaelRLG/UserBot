@@ -7,7 +7,9 @@ import re
 import modes
 from hashlib import sha1
 
+import request
 from config import core as config
+
 
 log = logg.getLogger(__name__)
 
@@ -31,17 +33,30 @@ class usr:
     if users is None:
         users = {}
 
-    def ch_passwd(self, server, username, new_passwd):
+    def ch_passwd(self, server, username, new_passwd, irc=None):
         """Cambia la contraseña de usuario."""
         inf = self.info(server, username)
         if inf is not None:
             inf['passwd'] = util.hash(new_passwd)
-            if self.identified(server, username) == OPERATION_SUCCESSFUL:
-                del self.online[server][util.uuid(username)]
+            if self.ident_med(server, username) == 0:
+                if self.identified(server, username) == OPERATION_SUCCESSFUL:
+                    del self.online[server][util.uuid(username)]
             config.upconfig('users', self.users)
             return OPERATION_SUCCESSFUL
 
         return USER_NOT_REGISTERED
+
+    def ch_ident(self, server, user, num, irc=None):
+        if num in (0, 1):
+            info = self.info(server, user)
+            if not info['id'] == num:
+                if info['id'] == 0:
+                    if self.identified(server, user) == OPERATION_SUCCESSFUL:
+                        del self.online[server][util.uuid(user)]
+
+                info['id'] == num
+                config.upconfig('users', self.users)
+                return OPERATION_SUCCESSFUL
 
     def confirm_drop(self, code):
         """Comfirma la eliminacion del usuario."""
@@ -51,8 +66,10 @@ class usr:
         except:
             return INVALID_PARAMETER
         if self.registered(server, username):
-            if self.identified(server, username) == OPERATION_SUCCESSFUL:
-                del self.online[server][util.uuid(username)]
+            if self.ident_med(server, username) == 0:
+                if self.identified(server, username) == OPERATION_SUCCESSFUL:
+                    del self.online[server][util.uuid(username)]
+
             del self.users[server][util.uuid(username)]
             config.upconfig('users', self.users)
             log.info('Usuario "%s" eliminado de "%s"' % (username, server))
@@ -69,16 +86,21 @@ class usr:
             return s
         return USER_NOT_REGISTERED
 
-    def identified(self, server, username):
+    def identified(self, server, username, irc=None):
         """Retorna valores numericos si el usuario esta autenticado."""
-        if not server in self.online:
-            self.online[server] = {}
+        if not self.registered(server, username):
+            return USER_NOT_REGISTERED
 
-        if self.registered(server, username):
-            if util.uuid(username) in self.online[server]:
-                return OPERATION_SUCCESSFUL
-            return OPERATION_FAILED
-        return USER_NOT_REGISTERED
+        if self.ident_med(server, username) == 0:
+            if not server in self.online:
+                self.online[server] = {}
+
+                if util.uuid(username) in self.online[server]:
+                    return OPERATION_SUCCESSFUL
+                return OPERATION_FAILED
+        else:
+            pass
+
 
     def identify(self, server, username, host, password):
         """
@@ -98,11 +120,11 @@ class usr:
                 self.online[server][id]['HOST'] = host
         return num
 
-    def identify_oper(self, server, username, mask, opername, passwd):
+    def identify_oper(self, server, username, mask, opername, passwd, irc=None):
         """Identifica a un usuario como operador de userbot."""
         opers = config.obtconfig('oper_ls')
 
-        num = self.identified(server, username)
+        num = self.identified(server, username, irc)
         if num == OPERATION_SUCCESSFUL:
             if opername in opers:
                 if util.hash(passwd) == opers[opername]['passwd']:
@@ -161,7 +183,8 @@ class usr:
             'data': time.ctime(),
             'lang': self.lc,
             'info': {'lockReason': ''},
-            'status': 'allowed'}})
+            'status': 'allowed',
+            'id': 0}})
             log.info('Nuevo usuario ("%s") registrado en "%s"' %
             (username, server))
             config.upconfig('users', self.users)
