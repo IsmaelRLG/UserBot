@@ -122,11 +122,17 @@ class ServerConnection:
                 line = line.rstrip('\n').rstrip('\r')
 
         for name, regex in ircregex.ALL.items():
-            print [name, regex]
+            #print [name, regex]
             if name is 'ALL':
                 continue
-            match_result = re.match(regex, line, re.IGNORECASE)
-            if match_result is True:
+
+            try:
+                match_result = re.match(regex, line, re.IGNORECASE)
+            except Exception as error:
+                log.warning('regex invalida: ' + str(error))
+
+            if match_result:
+                #log.info('regex procesada: ' + str([name, regex]))
                 # Procesando los handlers globales...
                 if self._process_handler(name, match_result.group, 'global'):
                     break
@@ -136,22 +142,26 @@ class ServerConnection:
                     break
 
                 # Si llego hasta aca es que ningun handler se ejecuto.
-                buffer_input.put((self, name, match_result.group))
-                break
+                # Solo "NOTICE" y "PRIVMSG"
+                if name in ('NOTICE', 'PRIVMSG'):
+                    buffer_input.put((self, name, match_result.group))
+                    break
 
     def _process_handler(self, name, method_group, level):
         assert level in ('global', 'local')
 
         # Formateando....
-        S = 'self.{level}_handlers'.format(level=level)
+        S = eval('self.{level}_handlers'.format(level=level))
 
         try:
-            prt = eval(S + '.keys().sort()')
+            prt = S.keys()
+            prt.sort()
         except TypeError:
+            log.warning('retornando... no hay handlers %s por procesar' % level)
             return
 
         for priority in prt:
-            for handler in eval(S + '[priority]'):
+            for handler in S[priority]:
                 try:
                     return handler(self, name, method_group)
                 except UnboundLocalError:
@@ -174,7 +184,7 @@ class ServerConnection:
             name -- Tipo de handler a añadir (global o local)
         """
 
-        assert name not in ('global', 'local')
+        assert name in ('global', 'local')
         var = eval('self.%s_handlers' % name)
 
         if priority not in var:
@@ -183,8 +193,9 @@ class ServerConnection:
         var[priority].append(function)
 
         # Guardando la configuracion mas actual
-        config.upconfig(name + '_handlers', var)
-        log.info('handler %s añadido: %s' % (name, function.__name__))
+        #config.upconfig(name + '_handlers', var)
+        log.info('handler %s añadido: %s, prioridad: %s' %
+        (name, function.__name__, priority))
 
     def admin(self, server=""):
         """Send an ADMIN command."""
@@ -259,7 +270,12 @@ class ServerConnection:
             self.send_raw('AUTHENTICATE ' + self.base.sasl[1])
             self.cap('END')
 
-        self.user(config.obtconfig('VERSION')[0], self.base.user)
+        try:
+            self.user(config.obtconfig('VERSION')[0], self.base.user)
+        except config.ProgrammingError:
+            time.sleep(2)
+            self.user(config.obtconfig('VERSION')[0], self.base.user)
+
         self.nick(self.base.nick)
 
     def disconnect(self, message=''):
@@ -316,8 +332,8 @@ class ServerConnection:
                         log.debug('RECV FROM %s: %s' % (self.base.name, line))
             except socket.error:
                 # The server hung up.
-                self.disconnect("Connection reset by peer")
-                return
+                self.connected = False
+                break
         log.warning('¡Se detuvo la entrada de datos de %s!' % self.base.name)
 
     def invite(self, nick, channel):
@@ -451,10 +467,10 @@ class ServerConnection:
 
         for func in var[priority]:
             if func.func_name == function.func_name:
-                var.remove(func)
+                var[priority].remove(func)
 
         # Guardando la configuracion mas actual
-        config.upconfig(name + '_handlers', var)
+        #config.upconfig(name + '_handlers', var)
         log.info('handler %s eliminado: %s' % (name, function.__name__))
 
     def send_raw(self, string):
@@ -549,6 +565,7 @@ class output(object):
         """
 
         plaintext = config.obtconfig('plaintext')
+        mps = config.obtconfig('mps')
         while self._stop is False:
             out = buffer_output.get()
             if out == 0:  # Saliendo! D:
@@ -569,7 +586,8 @@ class output(object):
                     log.info('SEND TO %s: %s' % (out['servername'], out['msg']))
 
                 # Messages per seconds
-                time.sleep(config.obtconfig('mps'))
+                time.sleep(mps)
+
         log.warning('¡Se detuvo la salida de datos!')
 
     def stop(self):

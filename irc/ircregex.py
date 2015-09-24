@@ -12,7 +12,7 @@ _ = lambda code: ':?(?P<machine>[^ ]+) {} (?P<me>[^ ]+) '.format(code)
 RPL_WELCOME = (_('001') + ':Welcome to the (?P<network>[^ ]+) '
     'Internet Relay Chat Network ((?(me)yes).+)')
 RPL_YOURHOST = (_('002') +
-    ':Your host is (?P<server>.+), running version (?P<version.*)')
+    ':Your host is (?P<server>.+), running version (?P<version>.*)')
 RPL_CREATED = _('003') + ':This server was created (?P<data>.*)'
 RPL_MYINFO = (_('004') + '(?P<servername>[^ ]+) (?P<version>[^ ]+)'
     ' (?P<aum>[^ ]+) (?P<acm>[^ ]+)')
@@ -43,7 +43,7 @@ RPL_WHOISSERVER = (_('312') + "(?P<nick>[^ ]+) (?P<server>[^ ]+) "
     " :(?P<server_info>.*)")
 RPL_WHOISOPERATOR = _('313') + "(?P<nick>[^ ]+) :is an IRC operator"
 RPL_ENDOFWHO = _('315') + "(?P<name>[^ ]+) :End of /?WHO list(\.)?"
-RPL_WHOISIDLE = (_('317') + "(?P<nick>[^ ]+) (?P<integer.*)"
+RPL_WHOISIDLE = (_('317') + "(?P<nick>[^ ]+) (?P<intege>r.*)"
     "( :seconds idle(, signon time)?)")
 RPL_ENDOFWHOIS = _('318') + "(?P<nick>[^ ]+) :End of /?WHOIS list(\.)?"
 RPL_LISTSTART = _('321') + "Channel :Users ( )?Name"  # Obsolete. Not used.
@@ -62,10 +62,8 @@ RPL_ENDOFINVITELIST = (_('347') + '(?P<channel>#[^ ]+) :'
 RPL_EXCEPTLIST = (_('348') + "(?P<channel>#[^ ]+) (?P<mask>[^ ]+) "
     "(?P<from>[^ ]+) (?P<date>[^ ]+)")
 RPL_ENDOFEXCEPTLIST = (_('349') +
-    "(?P<channel>#[^ ]+):End of channel exception [Ll]ist")
-RPL_WHOREPLY = (_('352') + "((?P<channel>#[^ ]+)|\*) (?P<user>[^ ]+) "
-    "(?P<host>[^ ]+) (?P<server>[^ ]+) (?P<nick>[^ ]+) (?P<status>[HG].+) "
-    ":(?P<hopcount>.[0-9]) (?P<realname>.*)")
+    "(?P<channel>#[^ ]+):End of channel exception list")
+RPL_WHOREPLY = _('352') + "(?P<line>.*)"
 RPL_NAMREPLY = _('353') + "(=|\*|@) (?P<channel>#[^ ]+) :(?P<nicks>.*)"
 RPL_LINKS = (_('364') + "(?P<mask>[^ ]+) (?P<server>[^ ]+) :"
     "(?P<hopcount>.[0-9]) (?P<server_info>.*)")
@@ -174,9 +172,9 @@ NOTICE = _('NOTICE') + '(?P<target>[^ ]+) :(?P<message>.*)'
 PRIVMSG = _('PRIVMSG') + '(?P<target>[^ ]+) :(?P<message>.*)'
 
 # Miscellaneous messages
-KILL = ''
+#KILL = ''
 PING = 'PING (?P<server1>[^ ]+)( (?P<server2>[^ ]+))?'
-PONG = ''
+#PONG = ''
 ERROR = 'ERROR (?P<message>.*)'
 
 ALL = vars()

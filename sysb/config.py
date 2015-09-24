@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import os
 import cPickle
 import database
-import traceback
+import time
 
 
 class config(database.ownbot):
@@ -31,6 +30,10 @@ class config(database.ownbot):
             self.select('core', 'pick', 'id="%s"' % name)[0][0].encode('utf-8'))
         except IndexError:
             pass
+        except self.ProgrammingError:
+            time.sleep(1)
+            return cPickle.loads(
+            self.select('core', 'pick', 'id="%s"' % name)[0][0].encode('utf-8'))
 
     def upconfig(self, name, _object):
         self.update('core',

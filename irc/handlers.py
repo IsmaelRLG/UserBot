@@ -2,21 +2,35 @@
 
 from sysb.config import core as config
 from time import sleep
-import re
+
+import sysb.logg as logg
+
+log = logg.getLogger(__name__)
+
+
+def method_handler(events):
+    def nanarana(method):
+        def wrapper(self, irc, event_name, group):
+            for event in events.upper().split():
+                if event == event_name:
+                    log.debug('handler ejecutado: ' + method.__name__)
+                    return method(self, event_name, group)
+
+            raise UnboundLocalError("it is not the required event")
+        return wrapper
+    return nanarana
 
 
 def handler(name):
     def wawe(func):
-        def tururu(*args):
-            if len(args) == 2:
-                posc = 0
-            else:
-                posc = 1
-            for i in name.split():
-                if name.upper() is not args[posc]:
-                    raise UnboundLocalError("it is not the required event")
-                else:
-                    return func(*args)
+        def tururu(self, _name_, group):
+            for nam in name.split():
+                #print [nam.upper(), _name_]
+                if nam.upper() == _name_:
+                    log.debug('handler ejecutado: ' + func.__name__)
+                    return func(self, _name_, group)
+
+            raise UnboundLocalError("it is not the required event")
         return tururu
     return wawe
 
@@ -47,6 +61,7 @@ def version(self, name, group):
         vrn = (vrn[0] + ' ' + '.'.join(str(num) for num in vrn[1:]))
         self.ctcp_reply(group('nick'), vrn)
         return True
+    raise UnboundLocalError("it is not the required event")
 
 
 @handler('kick')
@@ -72,26 +87,33 @@ def load_feature(self, name, group):
 @handler('rpl_myinfo')
 def registration_successful(self, name, group):
     self.registered = True
+    from client import log
+    log.info('Registro completado')
 
 
 @handler('err_nicknameinuse')
 def err_not_registered_nicknameinuse(self, name, group):
     import random
 
+    rn = self.base.nick + '-' + str(random.choice(range(100000)))
+    from client import log
+
     try:
         if self.registered is False:
-            self.nick(self.base.nick + '-' + str(random.choice(range(100000))))
+            self.nick(rn)
         else:
             return None
     except AttributeError:
-        self.nick(self.base.nick + '-' + str(random.choice(range(100000))))
+        self.nick(rn)
     finally:
+        log.info('nick en uso %s, cambiando por %s' % (self.base.nick, rn))
         return True
 
 
 @handler('privmsg')
 def ctcp_ping(self, name, group):
-    result = re.match("\001PING (?P<code>.+)\001", group('message'))
-    if result:
-        self.ctcp_reply(group('nick'), 'PING ' + result.group('code'))
+    if group('message').startswith("\001PING "):
+        self.ctcp_reply(group('nick'),
+        'PING ' + group('message').strip('\001').strip('PING '))
         return True
+    raise UnboundLocalError("it is not the required event")
