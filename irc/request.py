@@ -3,44 +3,80 @@
 import Queue
 import time
 
-from handlers import handler
+from handlers import method_handler as handler
+
+#==============================================================================#
+#                                memoria cache                                 #
+#==============================================================================#
 
 
-cache = {}
+class cache:
+    time_limit = 3.8
+    uses_limit = 3
+    cache = {}
 
+    def add(self, server, name, target, result):
+        server = server.lower()
+        if not server in self.cache:
+            self.cache[server] = {}
 
-def cache(name):
-    def tutu(func):
-        if not name in cache:
-            cache[name] = {}
+        if not name in self.cache[server]:
+            self.cache[server][name] = {}
 
-        def baba(self):
-            if not self.irc.base.name in self.cache[name]:
-                cache[name][self.irc.base.name] = {}
+        self.cache[server][name][target] = {
+            'time': time.time(),
+            'uses': 0,
+            'result': result}
 
-            n = cache[name][self.irc.base.name]
-            if self.target in n:
-                if n[self.target]['uses'] >= 2 or \
-                (time.time() - n[self.target]['time']) >= 3:
-                    del cache[name][self.irc.base.name][self.target]
+    def verify(self, server, name, target):
+        if not server in self.cache:
+            self.cache[server] = {}
 
-                else:
-                    self.queue.put(n[self.target]['result'])
-                    n[self.target]['uses'] += 1
-                    setattr(self, 'cache_use', (True, name))
+        if not name in self.cache[server]:
+            self.cache[server][name] = {}
 
-                    def does_nothing():
-                        pass
+        if not target in self.cache[server][name]:
+            return False
+        else:
+            epoch = (time.time() - self.cache[server][name][target]['time'])
+            if epoch > self.time_limit:
+                return False
+            elif self.cache[server][name][target]['uses'] > self.uses_limit:
+                return False
+            else:
+                return True
 
-                    return does_nothing()
+    def memory(self, func):
+        def arguments(__self__):
+            setattr(__self__, 'cache', False)
+            server = __self__.irc.base.name
+            target = __self__.target
+            name = __self__.__class__.__name__
 
-                if len(cache[name][self.irc.base.name]) >= 5:
-                    del cache[name][self.irc.base.name]
+            if self.verify(server, name, target):
+                self.cache[server][name][target]['uses'] += 1
+                __self__.queue.put(self.cache[server][name][target]['result'])
+                setattr(__self__, 'cache', True)
 
-            setattr(self, 'cache_use', (False, name))
-            return func(self)
-        return baba
-    return tutu
+                def does_nothing(*args):
+                    pass
+
+                function = does_nothing
+            else:
+                for tar, res in self.cache[server][name].items():
+                    if res['uses'] > self.uses_limit:
+                        del res
+                    elif (time.time() - res['time']) > self.time_limit:
+                        del res
+
+                __self__.irc.add_handler(__self__.func_reqs, -1, 'local')
+                time.sleep(0.4)
+                function = func
+
+            return function(__self__)
+        return arguments
+
+cache = cache()
 
 
 class request(object):
@@ -78,29 +114,39 @@ class request(object):
         self.target = target
         self.queue = Queue.Queue()
         self.execute()
-        irc.add_handler(self.func_reqs, 1, 'local')
         r = self.queue.get()
-        if not self.cache[0]:
-            cache[self.cache[1]][self.target] = {
-                'uses': 0,
-                'time': time.time(),
-                'result': r}
-        else:
-            time.sleep(0.3)
-        irc.remove_handler(self.func_reqs, 1, 'local')
-        return r
+        if not self.cache:
+            cache.add(irc.base.name, self.__class__.__name__, self.target, r)
+            irc.remove_handler(self.func_reqs, -1, 'local')
+
+        self.result = r
+
+    def __getitem__(self, item):
+        try:
+            return self.result[item]
+        except KeyError:
+            pass
+
+    def __setitem__(self, name, item):
+        self.result[name] = item
+
+    def __repr__(self):
+        return repr(self.result)
+
+    def __len__(self):
+        return len(self.result)
 
 
 class whois(request):
 
-    @cache('whois')
+    @cache.memory
     def execute(self):
-        self.irc.who(self.target)
+        self.irc.whois(self.target)
 
     @handler('rpl_whoisuser rpl_whoislogged rpl_endofwhois err_nosuchnick')
     def func_reqs(self, name, group):
         name = name.lower()
-        if name is 'rpl_whoisuser' and group('nick') is self.target:
+        if name == 'rpl_whoisuser' and group('nick') == self.target:
             self.result['mask'] = {
                 'nick': group('nick'),
                 'user': group('user'),
@@ -109,15 +155,15 @@ class whois(request):
                 'realname': group('realname')}
             return True
 
-        elif name is 'rpl_whoislogged' and group('username') is self.target:
+        elif name == 'rpl_whoislogged' and group('username') == self.target:
             self.result['is logged'] = group('account')
             return True
 
-        elif name is 'rpl_endofwhois' and group('nick') is self.target:
+        elif name == 'rpl_endofwhois' and group('nick') == self.target:
             self.queue.put(self.result)
             return True
 
-        elif name is 'err_nosuchnick' and group('nick') is self.target:
+        elif name == 'err_nosuchnick' and group('nick') == self.target:
             self.result['error'] = 'No such nick/channel'
             self.queue.put(self.result)
             return True
@@ -127,7 +173,7 @@ class whois(request):
 
 class who(request):
 
-    @cache('who')
+    @cache.memory
     def execute(self):
         self.irc.who(self.target)
 
@@ -135,32 +181,36 @@ class who(request):
     def func_reqs(self, name, group):
         name = name.lower()
 
-        if name is 'rpl_whoreply' and group('channel') is self.target:
+        if name == 'rpl_whoreply':
+            channel, user, host, server, nick, s, hopcount, realname = \
+            group('line').split(' ', 7)
+            if not self.target in (channel.lower(), nick.lower()):
+                raise UnboundLocalError
+
             if not 'list' in self.result:
                 self.result['list'] = []
 
-            self.result['list'].append((
-            '{}!{}@{}'.format(*group('nick', 'user', 'host')), group('status')))
+            self.result['list'].append(['{}!{}@{}'.format(nick, user, host), s])
             return True
 
-        elif name is 'rpl_endofwho' and group('nick') is self.target:
+        elif name == 'rpl_endofwho' and group('name').lower() == self.target:
             self.queue.put(self.result)
             return True
 
-        elif name is 'err_nosuchnick' and group('nick') is self.target:
+        elif name == 'err_nosuchnick' and group('nick').lower() == self.target:
             self.result['error'] = 'No such nick/channel'
             self.queue.put(self.result)
             return True
 
         else:
+            print 'soy una tetera!'
             raise UnboundLocalError
 
 
 class list(request):
     mode = None
-    listen_rpl = None
 
-    @cache('list')
+    @cache.memory
     def execute(self):
         self.irc.mode(self.target, '+' + self.mode)
         if self.mode is 'b':

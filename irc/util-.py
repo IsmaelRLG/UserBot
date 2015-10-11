@@ -212,24 +212,24 @@ def ip_quad_to_numstr(quad):
 threads = {}
 
 
-def thread(action, name=None):
+def thread(name, action):
+    """
+    action:
+        1 - Start
+        2 - any...
+    """
     def wawe(func):
         def tururu(*args, **kwargs):
             def does_nothing(*a, **b):
                 pass
 
-            if name:
-                _name_ = name
-            else:
-                _name_ = str(func)
-
             from threading import Thread
-            threads.update({_name_:
-            Thread(target=func, name=_name_, args=args, kwargs=kwargs)})
+            threads.update({name:
+            Thread(target=func, name=name, args=args, kwargs=kwargs)})
 
             if action is 1:
-                log.debug('function "%s" started' % _name_)
-                threads[_name_].start()
+                log.debug('"%s" iniciado, funcion %s' % (name, func.__name__))
+                threads[name].start()
 
             return does_nothing(*args, **kwargs)
         return tururu

@@ -156,7 +156,7 @@ class make:
         print '+' + ('=' * 78) + '+'
         for langcode in locale._tr_aval():
             print '|%-78s|' % ('    [ %s ] %s: %s' %
-            (num, langcode, pylocale.LC_ALL[langcode]))
+            (num, langcode, pylocale.LC_ALL[langcode].decode('utf-8')))
             num += 1
         print '+' + ('=' * 78) + '+'
 
@@ -193,7 +193,7 @@ class make:
 
         user = i(_('usuario', lang))
         print _('NOTA: La contraseña debe ser ingresada bajo sha256', lang)
-        passdw = i(_('contraseña', lang))
+        passwd = i(_('contraseña', lang))
         print _('niveles disponibles: ', lang) + 'global local noob'
         level = i(_('nivel', lang))
         if level is 'global':
@@ -262,10 +262,6 @@ class make:
                 core.addconfig('prefix', r)
             else:
                 core.upconfig('prefix', r)
-
-    @handler
-    def userbot_pingtimeout(self):
-        pass
 
     @handler
     def users_on_userbot(self):

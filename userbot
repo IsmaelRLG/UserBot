@@ -133,32 +133,35 @@ def main():
     if len(sys.argv) == 1:
         sys.argv.append('')
 
-    print sys.argv
-
     if sys.argv[1] in ('--start', '--restart'):
+        import coloredlogs
         if '--debug=1' in sys.argv:
-            import coloredlogs
             coloredlogs.install(10)
 
         elif '--debug=2' in sys.argv:
-            import coloredlogs
             coloredlogs.install(20)
+        else:
+            coloredlogs.install(40)
 
         if not '--no-daemon' in sys.argv:
             startstop(stdout=os.getcwd()+'/userbot.log',
+                      stderr=os.getcwd()+'/userbot-error.log',
                       pidfile='/tmp/userbot.pid',
                       startmsg='UserBot started with PID: %s')
 
         os.chdir(PATH)
-        if os.path.exists('db/userbot'):
+        if not os.path.exists('db/userbot'):
             import logging
             logging.error('missing database file!')
 
             return
 
-        from client.connection import load_connections
+        import irc.connection as conn
 
-        load_connections()
+        conn.load_connections()
+
+        from sysb.commands import commands
+        commands.load_modules()
 
     elif sys.argv[1] == '--stop':
         startstop(stdout=os.getcwd()+'/userbot.log', pidfile='/tmp/userbot.pid')

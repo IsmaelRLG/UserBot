@@ -6,7 +6,6 @@ import logg
 from config import core
 from irc import util
 from irc import modes
-from irc import request
 
 
 log = logg.getLogger(__name__)
@@ -39,14 +38,37 @@ class database(object):
         self.irc = ircobject
         self.name = name
         self.lang = core.obtconfig('lang')
-        self.__core__ = core.obtconfig(name + '_' + self.irc.base.name.lower())
-        if not self.core:
-            self.core = {}
-            core.addconfig(name + '_' + self.irc.base.name.lower(), self.core)
+        self.__core__ = core.obtconfig(name + '_' + self.irc.base.name)
+        if not self.__core__:
+            self.__core__ = {}
+            core.addconfig(name + '_' + self.irc.base.name, self.__core__)
 
         if isinstance(extra, dict):
             for name, item in extra.items():
                 setattr(self, name, item)
+
+    def __getitem__(self, key):
+        try:
+            return self.__core__[util.uuid(key)]
+        except KeyError:
+            pass
+
+    def __setitem__(self, key, item):
+        self.__core__[util.uuid(key)] = item
+        self.save
+
+    def __delitem__(self, key):
+        del self.__core__[util.uuid(key)]
+        self.save
+
+    def __repr__(self):
+        return repr(self.__core__)
+
+    def __iter__(self):
+        return iter(self.__core__.items())
+
+    def __len__(self):
+        return len(self.__core__)
 
     def update(self, object):
         self.__core__.update(object)
@@ -54,7 +76,8 @@ class database(object):
 
     @property
     def save(self):
-        core.upconfig(self.name + '_' + self.irc.base.name.lower())
+        core.upconfig(self.name + '_' + self.irc.base.name, self.__core__)
+
 
 #==============================================================================#
 #                                                                              #
@@ -65,31 +88,148 @@ class database(object):
 
 class users(database):
 
-    def register(self, nickname, user, password):
-        if util.uuid(user) in self.usrdatabase:
-            return USER_REGISTERED
+    def __getitem__(self, key):
+        try:
+            key.result
+        except AttributeError:
+            key = key['is logged']
+            if key is None:
+                return
 
-        rpl_whois = request.whois(self.irc, nickname)
-        if rpl_whois['is logged'] and rpl_whois != user:
+        try:
+            return self.__core__[util.uuid(key)]
+        except KeyError:
+            pass
+
+    def register(self, rpl_whois):
+        if rpl_whois['is logged']:
             return OPERATION_FAILED
 
-        self.update({util.uuid(user): {
+        if self[rpl_whois['is logged']]:
+            return USER_REGISTERED
+
+        user = rpl_whois['is logged']
+
+        self[user] = {
             'name': user,
             'time': time.time(),
             'lang': self.lang,
             'lock': [False],
-            'status': 'user',
-            'passwd': util.hash(password)}})
+            'status': 'user'}
         return OPERATION_SUCCESSFULL
 
     def drop(self, code=None):
         if code in self.post:
             try:
-                del self.online[self.post[code]]
-                del self.__core__[self.post[code]]
+                account = self.post[code]
+                del self.post[code]
+                del self[account]
             except KeyError:
                 pass
+            finally:
+                return OPERATION_SUCCESSFULL
+        return OPERATION_FAILED
 
-        else:
+    def gendropcode(self, rpl_whois):
+        from hashlib import md5
+
+        code = md5(hash(self[rpl_whois['is logged']])).hexdigest()
+        self.post[code] = rpl_whois['is logged']
+        return code
+
+    def operid(self, name, passwd, rpl_whois):
+        for oper in core.obtconfig('opers'):
+            if oper['user'] == name and oper['passwd'] == util.uuid(passwd):
+                if len(oper['level']) == 2 and oper['level'][1] != self.server:
+                    return OPERATION_FAILED
+                else:
+                    self[rpl_whois['is logged']]['status'] = oper['level'][0]
+                    break
+        return INVALID_PARAMETER
+
+#==============================================================================#
+#                                                                              #
+#                      Gestor de base de datos: canales                        #
+#                                                                              #
+#==============================================================================#
 
 
+class channels(database):
+
+    def register(self, channel, account):
+        if self[channel]:
+            return CHANNEL_REGISTERED
+
+        self[channel] = {
+            'flags': {},
+            'templates': {
+                #Default
+                'founder': 'FLObikmorstv',
+                'admin': 'LSObikmorstv',
+                'op': 'Vbikmotv',
+                'voice': 'Vitv',
+                'clear': ''},
+            'sets': {},
+            'name': channel}
+        self.flags('set', channel, account, template='founder')
+        return OPERATION_SUCCESSFULL
+
+    def flags(self, action, *args, **kwargs):
+        def set(channel, account, flag=None, template=None):
+            if not account in self[channel]:
+                self[channel]['flags'][account] = ''
+
+            if template:
+                template = template.lower()
+                if not template in self[channel]['template']:
+                    return INVALID_PARAMETER
+
+                self[channel]['flags'][account] =\
+                self[channel]['template'][template]
+            elif flag:
+                for op, ___, null in modes._parse_modes(flag, 'FLOSVbikmorstv'):
+                    # op (operator) == -|+
+                    # __ == flag name
+                    # null == None
+
+                    if op == '-':
+                        if ___ in self[channel]['flags'][account]:
+                            self[channel]['flags'][account] =\
+                            self[channel]['flags'][account].replace(___, '')
+
+                    elif op == '+':
+                        if not ___ in self[channel]['flags'][account]:
+                            self[channel]['flags'][account] += ___
+
+            # sorter / deleter
+            if self[channel]['flags'][account] == '':
+                del self[channel]['flags'][account]
+            else:
+                flag = [l for l in self[channel]['flags'][account]]
+                flag.sort()
+                self[channel]['flags'][account] = ''.join(flag)
+
+            self.save
+            return OPERATION_SUCCESSFULL
+
+        def get(channel, account, **kwargs):
+            if not account in self[channel]:
+                return
+            return self[channel]['flags'][account]
+
+        return {'get': get, 'set': set}[action](*args, **kwargs)
+
+    def remove_user(self, account):
+        save = False
+        for uuid, channel in self:
+            for user, flags in channel['flags'].items():
+                if user == account:
+                    del self[channel['name']]['flags'][user]
+                    save = True
+
+        if save:
+            self.save
+
+    def privs(self, channel, account, flag):
+        return flag in self[channel]['flags'][account] if account in\
+        self[channel]['flags'] else False

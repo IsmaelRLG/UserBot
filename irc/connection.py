@@ -2,14 +2,12 @@
 
 import client
 
-from sysb.config import core as config
+from sysb.config import core
+from sysb import katheryn
 from handlers import *
 
-import katheryn
-
-chn = katheryn.nieto
-
-SERVER_OBJECTS = {}
+__output__ = []
+servers = {}
 
 # Cargamos los controladores necesarios...
 global_handler = client.ServerConnection.global_handlers
@@ -29,17 +27,22 @@ global_handler(ctcp_ping)
 
 def load_connections():
 
-    ircbase = config.obtconfig('ircbase')
+    ircbase = core.obtconfig('ircbase')
     if ircbase is None:
         return
 
+    output = client.output()
+    output.start()
+    __output__.append(output)
+
     for base in ircbase:
-        if base.name in SERVER_OBJECTS:
-            continue
-
-        SERVER_OBJECTS.update({base.name: client.ServerConnection(base)})
+        servers[base.name] = [client.ServerConnection(base)]
+        servers[base.name].append(
+        katheryn.users(servers[base.name][0], 'usr', {'post': {}}))
+        servers[base.name].append(
+        katheryn.channels(servers[base.name][0], 'chn'))
         if base.connect_to_beginning:
-            SERVER_OBJECTS[base.name].connect()
+            servers[base.name][0].connect()
 
-        for channel in chn.channel_list(base.name):
-            SERVER_OBJECTS[base.name].join(channel)
+            for uuid, channel in servers[base.name][2]:
+                servers[base.name][0].join(channel['name'])

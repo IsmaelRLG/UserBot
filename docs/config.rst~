@@ -1,0 +1,10 @@
+=============
+base de datos
+=============
+
+La base de datos se encuentra bajo SQLite3, la tabla de configuraciones se encuentra bajo el nombre de ``core``
+el nombre de la clase es ``config``, se puede encontrar una variable con una clase ya instanciada bajo ``core``
+esta clase poseé ciertos atributos, los cuales la mayoria son heredados de su clase padre ``ownbot`` que se
+puede encontrar en el modulo :doc:`database<database>`
+
+

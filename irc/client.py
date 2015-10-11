@@ -2,10 +2,10 @@
 
 import socket
 import struct
+import random
 import ssl
 import Queue
 import six
-import textwrap
 import traceback
 import time
 import re
@@ -15,14 +15,13 @@ import ircregex
 
 from sysb import logg
 from sysb.config import core as config
+from output import buffer_output
 from util import always_iterable
 from util import thread
 from util import threads
 
 log = logg.getLogger(__name__)
-
-buffer_input = Queue.Queue()
-buffer_output = Queue.Queue()
+buffer_input = []
 
 
 class IRCBase(object):
@@ -101,6 +100,8 @@ class ServerConnection:
         self.features = features.FeatureSet()
         self.base = base
         self.threads = {}
+        self.joiner = []
+        self.attempted = 0
 
         # Cargando los handlers locales D:
         self.local_handlers = config.obtconfig('local_handlers')
@@ -144,7 +145,7 @@ class ServerConnection:
                 # Si llego hasta aca es que ningun handler se ejecuto.
                 # Solo "NOTICE" y "PRIVMSG"
                 if name in ('NOTICE', 'PRIVMSG'):
-                    buffer_input.put((self, name, match_result.group))
+                    buffer_input.put((self, match_result.group))
                     break
 
     def _process_handler(self, name, method_group, level):
@@ -231,8 +232,14 @@ class ServerConnection:
         """
         Conecta o reconecta a un servidor.
         """
-        if self.connected:
-            return log.error('Ya estas conectado a %s!' % self.base.name)
+        #if self.connected:
+            #return log.error('Ya estas conectado a %s!' % self.base.name)
+
+        if self.attempted > 3:
+            self.attempted = 0
+            return
+        else:
+            self.attempted += 1
 
         try:
             log.info('Buscando ' + self.base.host)
@@ -249,12 +256,14 @@ class ServerConnection:
         except:
             for line in traceback.format_exc().splitlines():
                 log.error(line)
+            return
         else:
             log.info('Ahora registrándose...')
-            self.connected = True
 
         # Procesando la salida y entrada de datos.
-        self.input()
+        if not self.connected:
+            self.connected = True
+            self.input()
 
         # Logeandonos al servidor (si tiene contraseña claro)
         if self.base.passwd[0]:
@@ -270,11 +279,7 @@ class ServerConnection:
             self.send_raw('AUTHENTICATE ' + self.base.sasl[1])
             self.cap('END')
 
-        try:
-            self.user(config.obtconfig('VERSION')[0], self.base.user)
-        except config.ProgrammingError:
-            time.sleep(2)
-            self.user(config.obtconfig('VERSION')[0], self.base.user)
+        self.user(config.obtconfig('VERSION')[0], self.base.user)
 
         self.nick(self.base.nick)
 
@@ -308,7 +313,7 @@ class ServerConnection:
         """Send an INFO command."""
         self.send_raw(" ".join(["INFO", server]).strip())
 
-    @thread('input data', 1)
+    @thread(1)
     def input(self):
         "read and process input from self.socket"
         try:
@@ -329,7 +334,7 @@ class ServerConnection:
 
                     # Registrando cada linea
                     if plaintext:
-                        log.debug('RECV FROM %s: %s' % (self.base.name, line))
+                        log.info('RECV FROM %s: %s' % (self.base.name, line))
             except socket.error:
                 # The server hung up.
                 self.connected = False
@@ -359,6 +364,7 @@ class ServerConnection:
     def join(self, channel, key=""):
         """Send a JOIN command."""
         self.send_raw("JOIN %s%s" % (channel, (key and (" " + key))))
+        self.joiner.append(channel.lower())
 
     def kick(self, channel, nick, comment=""):
         """Send a KICK command."""
@@ -419,13 +425,8 @@ class ServerConnection:
 
     def part(self, channels, message=""):
         """Send a PART command."""
-        channels = always_iterable(channels)
-        cmd_parts = [
-            'PART',
-            ','.join(channels),
-        ]
-        if message: cmd_parts.append(message)
-        self.send_raw(' '.join(cmd_parts))
+        self.send_raw("PART %s%s" % (channels, (message and (" " + message))))
+        self.joiner.remove(channels.lower())
 
     def pass_(self, password):
         """Send a PASS command."""
@@ -475,6 +476,7 @@ class ServerConnection:
 
     def send_raw(self, string):
         """Añade una cadena al queue para ser enviada."""
+        print 'send %s' % id(buffer_output)
         buffer_output.put({
             'msg': string,
             'socket': self.socket,
@@ -538,165 +540,3 @@ class ServerConnection:
                                          max and (" " + max),
                                          server and (" " + server)))
 
-
-class output(object):
-    """
-    Clase sencilla para procesar la salida de una o mas conexiones.
-    """
-
-    def __init__(self):
-        # Solo uno xD
-        if 'output data' in threads:
-            return
-
-        self._stop = False
-        self.process_queue()
-
-    def begun(self):
-        return threads['output data'].isAlive()
-
-    def start(self):
-        threads['output data'].start()
-
-    @thread('output data', 0)
-    def process_queue(self):
-        """
-        Procesando el queue de salida.
-        """
-
-        plaintext = config.obtconfig('plaintext')
-        mps = config.obtconfig('mps')
-        while self._stop is False:
-            out = buffer_output.get()
-            if out == 0:  # Saliendo! D:
-                break
-
-            # According to the RFC http://tools.ietf.org/html/rfc2812#page-6,
-            # clients should not transmit more than 512 bytes.
-            if len(out['msg']) > 507:
-                out.update({'msg': textwrap.wrap(out['msg'], 507)[0] + '...'})
-
-            try:
-                out['socket'].send(out['msg'] + '\r\n')
-            except socket.error:
-                # Ouch!
-                out['disconnect']("Connection reset by peer.")
-            else:
-                if plaintext:
-                    log.info('SEND TO %s: %s' % (out['servername'], out['msg']))
-
-                # Messages per seconds
-                time.sleep(mps)
-
-        log.warning('¡Se detuvo la salida de datos!')
-
-    def stop(self):
-        if not self.begun():
-            return
-
-        self._stop = True
-        time.sleep(10)
-
-        if self.begun() is True:  # Oh no!! D: Sigue vivo!
-            buffer_output.put(0)
-            time.sleep(10)
-
-        # Reset
-        self._stop = False
-
-
-def is_channel(string):
-    """Check if a string is a channel name.
-
-    Returns true if the argument is a channel name, otherwise false.
-    """
-    return string and string[0] in "#&+!"
-
-
-def ip_numstr_to_quad(num):
-    """
-    Convert an IP number as an integer given in ASCII
-    representation to an IP address string.
-
-    >>> ip_numstr_to_quad('3232235521')
-    '192.168.0.1'
-    >>> ip_numstr_to_quad(3232235521)
-    '192.168.0.1'
-    """
-    n = int(num)
-    packed = struct.pack('>L', n)
-    bytes = struct.unpack('BBBB', packed)
-    return ".".join(map(str, bytes))
-
-
-def ip_quad_to_numstr(quad):
-    """
-    Convert an IP address string (e.g. '192.168.0.1') to an IP
-    number as a base-10 integer given in ASCII representation.
-
-    >>> ip_quad_to_numstr('192.168.0.1')
-    '3232235521'
-    """
-    bytes = map(int, quad.split("."))
-    packed = struct.pack('BBBB', *bytes)
-    return str(struct.unpack('>L', packed)[0])
-
-
-class NickMask(six.text_type):
-    """
-    A nickmask (the source of an Event)
-
-    >>> nm = NickMask('pinky!username@example.com')
-    >>> print(nm.nick)
-    pinky
-
-    >>> print(nm.host)
-    example.com
-
-    >>> print(nm.user)
-    username
-
-    >>> isinstance(nm, six.text_type)
-    True
-
-    >>> nm = 'красный!red@yahoo.ru'
-    >>> if not six.PY3: nm = nm.decode('utf-8')
-    >>> nm = NickMask(nm)
-
-    >>> isinstance(nm.nick, six.text_type)
-    True
-
-    Some messages omit the userhost. In that case, None is returned.
-
-    >>> nm = NickMask('irc.server.net')
-    >>> print(nm.nick)
-    irc.server.net
-    >>> nm.userhost
-    >>> nm.host
-    >>> nm.user
-    """
-    @classmethod
-    def from_params(cls, nick, user, host):
-        return cls('{nick}!{user}@{host}'.format(**vars()))
-
-    @property
-    def nick(self):
-        nick, sep, userhost = self.partition("!")
-        return nick
-
-    @property
-    def userhost(self):
-        nick, sep, userhost = self.partition("!")
-        return userhost or None
-
-    @property
-    def host(self):
-        nick, sep, userhost = self.partition("!")
-        user, sep, host = userhost.partition('@')
-        return host or None
-
-    @property
-    def user(self):
-        nick, sep, userhost = self.partition("!")
-        user, sep, host = userhost.partition('@')
-        return user or None

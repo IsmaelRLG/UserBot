@@ -1,80 +1,105 @@
 # -*- coding: utf-8 -*-
 
-import re
-import util
-import commands
-import pylocale
-import katheryn
+from sysb.config import core
+from sysb import commands
+from sysb import pylocale
+from irc.connection import servers as base
 
-from config import core as config
-from katheryn import (
-    USER_NOT_REGISTERED,
-    INVALID_PARAMETER,
-    OPERATION_SUCCESSFUL,
-    USER_REGISTERED,
-    OPERATION_FAILED,
-    PERMISSION_DENIED,
-    CHANNEL_REGISTERED,
-    CHANNEL_NOT_REGISTERED)
-
-trn = pylocale.turn('es', config.obtconfig('trs'), pylocale.parsename(__name__))
-_ = trn.turn_tr_str
-usr = katheryn.tona
-chn = katheryn.nieto
-dlc = config.obtconfig('default_lang')
+locale = pylocale.turn(
+    'es',
+    core.obtconfig('package_translate'),
+    pylocale.parsename(__name__))
+_ = locale.turn_tr_str
+lang = core.obtconfig('lang')
 
 
-@commands.addHandler(
-    'chan register',
-    'chan register',
-    _('registra un nuevo canal en userbot', dlc),
-    'chan register <channel>',
-    '',
-    __name__,
-    chn_req=(True, 'chan register (?P<channel>[^ ]+)', 'channel'),
-    no_registered=True)
-def register(irc, group, result, other):
-    lang = usr.default_lang(irc.LC, irc.base.name, group('nick'))
-    r = chn.register(irc.base.name, result('channel'), group('nick'))
-    if r is CHANNEL_REGISTERED:
-        irc.err(other['target'], _('canal registrado', lang))
-    elif r is OPERATION_SUCCESSFUL:
-        irc.notice(other['target'], _('canal registrado con exito', lang))
+@commands.addHandler(__name__, 'chan register( (?P<channel>[^ ]+))?', {
+    'sintax': 'chan register <channel>?',
+    'example': 'chan register #Foo',
+    'desc': _('registra un canal en el bot', lang)},
+    registered=True,
+    logged=True,
+    channels=True,
+    chan_reqs='channel')
+def register(irc, result, group, other):
+    account = other['rpl_whois']['is logged'].lower()
+    lang = base[irc.base.name][1][account]['lang']
 
-
-@commands.addHandler(
-    'chan (flags|access|privs) (?P<username>[^ ]+) (?P<flags>[^ ]+)',
-    'chan flags',
-    _('añade flags a un usuario en un canal en userbot', dlc),
-    'chan <channel> flags <username> <flags>',
-    'S',
-    __name__,
-    chn_req=(
-        True,
-        'chan (?P<channel>[^ ]+) flags (?P<username>[^ ]+) (?P<flags>[^ ]+)',
-        'channel'))
-def setFlags(irc, group, result, other):
-    lang = usr.default_lang(irc.LC, irc.base.name, group('nick'))
-    kwargs = {'flags' if '+' in result('flags')
-              or '-' in result('flags') else 'templats': result('flags')}
-    r = chn.setFlags(
-        irc.base.name,  # Nombre de la red
-        other['channel'],  # Canal a setear los flags
-        result('username'),  # Nombre del usuario
-        **kwargs)  # flags
-
-    if r is CHANNEL_NOT_REGISTERED:
+    if not other['channel'].lower() in irc.joiner:
         irc.err(other['target'],
-        _('canal "%s" no registrado.', lang) % other['channel'])
-    elif r is USER_NOT_REGISTERED:
-        irc.err(other['target'],
-        _('usurario "%s" no registrado', lang) % result('username'))
-    elif r is OPERATION_FAILED:
-        irc.err(other['target'], _('no se pudieron cambiar los flags', lang))
-    elif isinstance(r, tuple):
-        irc.notice(other['target'], _('flags cambiados a: ', lang) + str(r))
+        _('no puede registrar el canal, informe a un operador', lang))
+        return
+
+    resu = base[irc.base.name][2].register(other['channel'], account)
+    if resu == 5:
+        irc.err(other['target'], _('canal ya registrado', lang))
+    elif resu == 7:
+        irc.notice(other['target'], _('canal registrado correctamente', lang))
 
 
-@commands.addHandler()
-def list_flags():
-    pass
+@commands.addHandler(__name__, 'chan flags( (?P<channel>#[^ ]+) )?(?<target>' +
+    '[^ ]+) (?P<flags>[^ ]+)', {
+    'sintax': 'chan flags <channel>? <target> <flags>',
+    'example': 'chan flags #Foo-chan foo-user OP',
+    'desc': _('(añade / elimina / edita / muestra) los flags', lang)},
+    registered=True,
+    logged=True,
+    channels=True,
+    chn_registered=True,
+    privs='s',
+    chan_reqs='channel')
+def flags(irc, result, group, other):
+    lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
+    if result('target', 'flags') == ('*', '*'):
+
+        num = 1
+        for us, fl in base[irc.base.name][2][other['channel']]['flags'].items():
+            irc.notice(other['target'], '[ %s ] | %-25s | [ %s ]' %
+            (str(num).zfill(2), us, fl))
+            num += 1
+
+    if not base[irc.base.name][1][result('target')]:
+        irc.err(other['target'], _('usuario no registrado en el bot', lang))
+        return
+
+    if result('flags') == '*':
+        irc.notice(other['target'], '[ 01 ] | %-25s | [ %s ]' %
+        (result('target'), base[irc.base.name][2].flags('get',
+        other['channel'], result('target').lower())))
+
+    else:
+        before = base[irc.base.name][2].flags(
+        'get', other['channel'], result('target').lower())
+
+        if result('flags')[0] in '+-':
+            kwargs = {'flag': result('flags')}
+        else:
+            kwargs = {'template': result('flags')}
+
+        base[irc.base.name][2].flags('set',
+        other['channel'], result('target').lower(), **kwargs)
+
+        after = base[irc.base.name][2].flags(
+        'get', other['channel'], result('target').lower())
+
+        irc.notice(other['target'], _('flags actualizado:', lang) +
+        str((before, after)))
+
+
+@commands.addHandler(__name__, 'chan drop( (?P<channel>#[^ ]+))?', {
+    'sintax': 'chan flags <channel>?',
+    'example': 'chan drop #foo',
+    'desc': _('elimina un canal del bot', lang)},
+    registered=True,
+    logged=True,
+    channels=True,
+    chn_registered=True,
+    privs='F',
+    chan_reqs='channel')
+def drop(irc, result, group, other):
+    lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
+    del base[irc.base.name][2][other['channel']]
+    irc.notice(other['target'], _('canal eliminado', lang))
+    irc.part(other['channel'], _('saliendo...', lang))
+
+

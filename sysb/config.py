@@ -25,15 +25,16 @@ class config(database.ownbot):
         self.delete('core', name)
 
     def obtconfig(self, name):
-        try:
-            return cPickle.loads(
-            self.select('core', 'pick', 'id="%s"' % name)[0][0].encode('utf-8'))
-        except IndexError:
-            pass
-        except self.ProgrammingError:
-            time.sleep(1)
-            return cPickle.loads(
-            self.select('core', 'pick', 'id="%s"' % name)[0][0].encode('utf-8'))
+        t = 1
+        while t < 2:
+            try:
+                return cPickle.loads(self.select('core', 'pick', 'id="%s"'
+                % name)[0][0].encode('utf-8'))
+            except IndexError:
+                return
+            except self.ProgrammingError:
+                time.sleep(t)
+                t += 1
 
     def upconfig(self, name, _object):
         self.update('core',

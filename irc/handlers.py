@@ -47,8 +47,16 @@ def ponger(self, name, group):
 
 @handler('error')
 def error(self, name, group):
-    self.disconnect(group('message'))
-    sleep(4)
+    import socket
+    try:
+        self.socket.shutdown(socket.SHUT_WR)
+        self.socket.close()
+    except socket.error:
+        pass
+    finally:
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    sleep(10)
     self.connect()
     return True
 
@@ -89,6 +97,7 @@ def registration_successful(self, name, group):
     self.registered = True
     from client import log
     log.info('Registro completado')
+    self.attempted = 0
 
 
 @handler('err_nicknameinuse')

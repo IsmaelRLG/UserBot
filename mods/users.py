@@ -1,184 +1,112 @@
 # -*- coding: utf-8 -*-
 
-import util
-import commands
-import pylocale
-import katheryn
+from sysb.config import core
+from sysb import commands
+from sysb import pylocale
+from irc.connection import servers as base
 
-from config import core as config
-from katheryn import (
-    USER_NOT_REGISTERED,
-    INVALID_PARAMETER,
-    OPERATION_SUCCESSFUL,
-    USER_REGISTERED,
-    OPERATION_FAILED,
-    PERMISSION_DENIED)
-
-trn = pylocale.turn('es', config.obtconfig('trs'), pylocale.parsename(__name__))
-_ = trn.turn_tr_str
-usr = katheryn.tona
-dlc = config.obtconfig('default_lang')
+locale = pylocale.turn(
+    'es',
+    core.obtconfig('package_translate'),
+    'users')
+_ = locale.turn_tr_str
+lang = core.obtconfig('lang')
 
 
-@commands.addHandler(
-    'user register (?P<username>[^ ]+) (?P<password>.*)',
-    'user register',
-    _('registra un usuario nuevo en userbot', dlc),
-    'user register <username> <password>',
-    '',
-    __name__,
-    any=True,
-    prv=True)
-def register(irc, group, result, other):
-    lang = usr.default_lang(irc.LC, irc.base.name, group('nick'))
-    r = usr.register(irc.base.name, result('username'), result('password'))
-    if r is OPERATION_SUCCESSFUL:
-        irc.notice(group('nick'),
-        _('usuario "%s" registrado con exito.', lang) % result('username'))
-    elif r is USER_REGISTERED:
-        irc.err(group('nick'),
-        _('usuario "%s" ya registrado', lang) % result('username'))
-
-
-@commands.addHandler(
-    'user (auth|id|identify) (?P<username>[^ ]+) (?P<password>.*)',
-    'user id',
-    _('identifica a un usuario como el dueño de una cuenta en userbot', dlc),
-    'user auth <username> <password>',
-    '',
-    __name__,
-    any=True,
-    prv=True)
-def id(irc, group, result, other):
-    lang = usr.default_lang(irc.LC, irc.base.name, group('nick'))
-    r = usr.identify(
-        irc.base.name,
-        result('username'),
-        group('host'),
-        result('password'))
-
-    if r is USER_NOT_REGISTERED:
-        irc.err(group('nick'),
-        _('no se encuentra registrado, favor registrese.', lang))
-    elif r is INVALID_PARAMETER:
-        irc.err(group('nick'), _('usuario o contraseña erronea', lang))
-    elif r is OPERATION_SUCCESSFUL:
-        irc.notice(group('nick'), _('autenticado con exito', lang))
-
-
-@commands.addHandler(
-    'user (drop|delete|del|remove)',
-    'user drop',
-    _('elimina a un usuario de la base de datos de userbot', dlc),
-    'user drop',
-    '',
-    __name__,
-    prv=True)
-def drop(irc, group, result, other):
-    lang = usr.default_lang(irc.LC, irc.base.name, group('nick'))
-    r = usr.drop(irc.base.name, group('nick'))
-    if isinstance(r, str):
-        irc.notice(group('nick'), _('su codigo de eliminacion es: ', lang) + r)
-        irc.notice(group('nick'), _('envie: user confirm-drop ', lang) % r)
-
-
-@commands.addHandler(
-    'user (comfirm(-drop)?) (?P<code>.*)'
-    'user confirm-drop',
-    _('confirma la eleminacion de un usuario.', dlc),
-    'user confirm-drop <code>',
-    '',
-    __name__,
-    prv=True)
-def confirm_drop(irc, group, result, other):
-    lang = usr.default_lang(irc.LC, irc.base.name, group('nick'))
-    r = usr.confirm_drop(result('code'))
-    if r is OPERATION_SUCCESSFUL:
-        irc.notice(group('nick'), _('se elimino su cuenta con exito.', lang))
-    elif r is INVALID_PARAMETER:
-        irc.err(group('nick'), _('codigo de confirmacion invalido.', lang))
-
-
-@commands.addHandler(
-    'user info (?P<username>[^ ]+)',
-    'user info',
-    _('muestra la informacion de un usuario en userbot', dlc),
-    'user info <username>',
-    '',
-    __name__,
-    any=True)
-def info(irc, group, result, other):
-    lang = usr.default_lang(irc.LC, irc.base.name, group('nick'))
-    r = usr.info(irc.base.name, result('username'))
-    if r:
-        n = other['target']
-        irc.notice(n, _('nombre: ', lang) + r['name'])
-        irc.notice(n, _('lenguaje: ', lang) + pylocale.LC_ALL[r['lang']])
-        irc.notice(n, _('estado de cuenta: ', lang) + r['status'])
-        if usr.isLocked(irc.base.name, result('username')):
-            irc.notice(n, _('razon : ', lang) + r['info']['lockReason'])
-
-        id = usr.identified(irc.base.name, result('username'))
-        if id is OPERATION_SUCCESSFUL:
-            id = 'True'
-        elif id is OPERATION_FAILED:
-            id = 'False'
-
-        irc.notice(n, _('identificado: ', lang) + id)
-        irc.notice(n, _('registrado en: ', lang) + r['data'])
-
-        if usr.isOper(irc.base.name, group('nick')):
-            irc.notice(group('nick'), _('*** informacion extra ***', lang))
-            irc.notice(group('nick'), _('contraseña: ', lang) + r['passwd'])
-            if eval(id):
-                import time
-                id = util.uuid(username)  # lint:ok
-                irc.notice(group('nick'), _('visto por ultima vez: ', lang) +
-                str(time.time() - usr.online[irc.base.name][id]['IDLE']))
-                irc.notice(group('nick'), 'host: ' +
-                usr.online[irc.base.name][id]['HOST'])
-            irc.notice(group('nick'), _('*** fin ***', lang))
+@commands.addHandler(__name__, 'user register', {
+    'sintax': 'user register',
+    'example': 'user register',
+    'desc': _('registra un usuario en el bot', lang)},
+    logged=True)
+def register(irc, result, group, other):
+    result = base[irc.base.name][1].register(other['rpl_whois'])
+    if result == 6:
+        lang = base[irc.base.name][1][other['rpl_whois']]['lang']
+        irc.err(group('nick'), _('usuario ya registrado', lang))
     else:
-        irc.err(n, _('usuario "%s" no registrado', lang) % result('username'))
+        irc.notice(group('nick'), _('registrado correctamente: "%s"', lang) %
+        base[irc.base.name][1][other['rpl_whois']])
 
 
-@commands.addHandler(
-    'user set lang (?P<lc>.*)',
-    'user set lang',
-    _('cambia el lenguaje que se muestra por userbot', dlc),
-    'user set <langcode>',
-    '',
-    __name__,
-    prv=True)
-def set_lc(irc, group, result, other):
-    nick = group('nick')
-    lang = usr.default_lang(irc.LC, irc.base.name, nick)
-    if result('lc') in trn._tr_aval():
-        usr.users[irc.base.name][util.uuid(nick)]['lang'] = result('lc')
-        lang = usr.default_lang(irc.LC, irc.base.name, nick)
-        irc.notice(nick, _('su lenguje se ha actualizado.', lang))
+@commands.addHandler(__name__, 'user drop', {
+    'sintax': 'user drop',
+    'example': 'user drop',
+    'desc': _('elimina a un usuario registrado', lang)},
+    registered=True,
+    logged=True)
+def drop(irc, result, group, other):
+    lang = base[irc.base.name][1][other['rpl_whois']]['lang']
+    code = base[irc.base.name][1].gendropcode(other['rpl_whois'])
+    irc.notice(group('nick'), _('codigo de confirmacion: "%s"', lang) % code)
+    irc.notice(group('nick'), _('envie: %s: user confirm_drop <codigo>', lang) %
+    irc.base.nick)
+
+
+@commands.addHandler(__name__, 'user confirm_drop (?P<code>[^ ]+)', {
+    'sintax': 'user confirm_drop <code>',
+    'example': 'user confirm_drop 6adf97f83acf6453d4a6a4b1070f3754',
+    'desc': _('confirma la eliminacion de un usuario', lang)},
+    registered=True,
+    logged=True)
+def confirm_drop(irc, result, group, other):
+    num_resl = base[irc.base.name][1].drop(result('code'))
+    lang = base[irc.base.name][1][other['rpl_whois']]['lang']
+    if num_resl in (0, None):
+        irc.err(group('nick'), _('codigo invalido', lang))
     else:
-        irc.err(nick, _('lenguaje "%s" no disponible', lang) % result('lc'))
+        base[irc.base.name][2].remove_user(other['rpl_whois']['is logged'])
+        irc.notice(group('nick'), _('eliminado correctamente', lang))
 
 
-@commands.addHandler(
-    'user set password (?P<passwd>[^ ]+) (?P<new_passwd>[^ ]+)',
-    'user set password',
-    _('cambia la contraseña que se usara en userbot', dlc),
-    'user set password <old_password> <new_password>'
-    '',
-    __name__,
-    prv=True)
-def set_passwd(irc, group, result, other):
-    nick = group('nick')
-    lang = usr.default_lang(irc.LC, irc.base.name, nick)
-    old_ = usr.info(irc.base.name, nick)['passwd']
-    _old = util.hash(result('passwd'))
-    if old_ == _old:
-        new = result('new_password')
-        usr.ch_passwd(irc.base.name, nick, new)
-        irc.notice(nick, _('su contraseña se actualizo a: %s', lang) % new)
-        irc.notice(nick, _('Por favor, autentíquese nuevamente', lang))
-        irc.notice(nick, _('Envie: user id %s %s', lang) % (nick, new))
+@commands.addHandler(__name__, 'user lang (?P<langcode>[^ ]+)', {
+    'sintax': 'user lang <langcode>',
+    'example': 'user lang en',
+    'desc': _('cambia el idioma que se muestra al usuario', lang)},
+    registered=True,
+    logged=True)
+def set_lang(irc, result, group, other):
+    lang = base[irc.base.name][1][other['rpl_whois']]['lang']
+    lc = result('langcode').lower()
+
+    if lc == 'list':
+        irc.notice(group('nick'), _('codigos de lenguaje disponibles:', lang))
+        for lc in locale.locale._tr_aval():
+            irc.notice(group('nick'), '[ %s ] - %s' % (lc, pylocale.ALL[lc]))
+    elif lc in locale.locale._tr_aval():
+        base[irc.base.name][1][other['rpl_whois']]['lang'] = lc
+        base[irc.base.name][1].save
+        irc.notice(group('nick'), _('idioma actualizado', lc))
     else:
-        irc.err(nick, _('contraseña invalida', lang))
+        irc.err(group('nick'), _('codigo de lenguaje invalido', lang))
+
+
+@commands.addHandler(__name__, 'user info( (?P<account>[^ ]+))?', {
+    'sintax': 'user info <account>?',
+    'example': 'user info foo',
+    'desc': _('muestra informacion de un usuario en userbot', lang)},
+    anyuser=True)
+def info(irc, result, group, other):
+    from irc.request import whois
+    rpl = whois(group('nick'))
+    account = result('account')
+    if rpl['is logged'] and base[irc.base.name][1][rpl['is logged']]:
+        lang = base[irc.base.name][1][rpl['is logged']]['lang']
+        if not account:
+            account = rpl['is logged']
+
+    if not account:
+        account = group('nick')
+
+    user = base[irc.base.name][1][account]
+    t = other['target']
+    if not user:
+        irc.err(t, _('usuario no registrado', lang))
+        return
+
+    irc.notice(t, _('nombre de usuario: ', lang) + user['name'])
+    irc.notice(t, _('fecha de registro: ', lang) + user['time'])
+    irc.notice(t, _('idioma de usuario: ', lang) + pylocale.ALL(user['lang']))
+    irc.notice(t, _('nivel del usuario: ', lang) + user['status'])
+    irc.notice(t, _('cuenta bloqueada: ', lang) + user['lock'][0])
+    if user['lock'][0]:
+        irc.notice(t, _('razon de bloqueo: ', lang) + user['lock'][1])
