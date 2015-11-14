@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import re, os, imp, logg, types, traceback, pylocale
+import re, os, imp, logg, types, thread, traceback, pylocale
 
 from config import core
-from irc.util import thread
 from irc.client import buffer_input
 from irc.request import whois
 from irc.connection import servers
@@ -154,7 +153,7 @@ class commands(object):
 
         return rpl_whois
 
-    @thread('commands', 1)
+    @thread.thread(init=True)
     def endless_process(self):
         prefix = core.obtconfig('prefix')
         while True:

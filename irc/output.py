@@ -5,7 +5,7 @@ import Queue
 import socket
 import textwrap
 
-from threading import Thread
+from sysb import thread
 from sysb import logg
 from sysb.config import core
 
@@ -20,16 +20,17 @@ class output(object):
     """
 
     def __init__(self):
-        self.thread = Thread(target=self.process_queue, name='output', args=(), kwargs={})
+        self.process_queue()
         self._stop = False
 
     def begun(self):
-        return self.thread.isAlive()
+        return thread.thd['output'].isAlive()
 
     def start(self):
-        self.thread.start()
-        log.debug('global output started')
+        if 'output' in thread.thd:
+            thread.start('output')
 
+    @thread.thread(n='output')
     def process_queue(self):
         """
         Procesando el queue de salida.
@@ -78,4 +79,3 @@ class output(object):
 
         # Reset
         self._stop = False
-        self.thread = Thread(target=self.process_queue, name='output', args=(), kwargs={})

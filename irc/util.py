@@ -12,8 +12,6 @@ from sysb import logg
 # Encriptado, se usa en este caso: sha256. Cambiar al gusto.
 __hash__ = __import__('hashlib').sha256
 log = logg.getLogger(__name__)
-log.info("Las contraseñas se guardan bajo: " +
-          str(__hash__).split()[2].split('_')[1].replace('>', ''))
 
 
 def always_iterable(item):

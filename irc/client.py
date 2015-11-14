@@ -14,14 +14,13 @@ import features
 import ircregex
 
 from sysb import logg
+from sysb import thread
 from sysb.config import core as config
 from output import buffer_output
 from util import always_iterable
-from util import thread
-from util import threads
 
 log = logg.getLogger(__name__)
-buffer_input = []
+buffer_input = Queue.Queue()
 
 
 class IRCBase(object):
@@ -99,7 +98,7 @@ class ServerConnection:
         """
         self.features = features.FeatureSet()
         self.base = base
-        self.threads = {}
+        self.thd_input_code = None
         self.joiner = []
         self.attempted = 0
 
@@ -145,7 +144,7 @@ class ServerConnection:
                 # Si llego hasta aca es que ningun handler se ejecuto.
                 # Solo "NOTICE" y "PRIVMSG"
                 if name in ('NOTICE', 'PRIVMSG'):
-                    buffer_input.put((self, match_result.group))
+                    buffer_input.put(self, match_result.group)
                     break
 
     def _process_handler(self, name, method_group, level):
@@ -263,7 +262,7 @@ class ServerConnection:
         # Procesando la salida y entrada de datos.
         if not self.connected:
             self.connected = True
-            self.input()
+            self.thd_input_code = self.input()
 
         # Logeandonos al servidor (si tiene contraseña claro)
         if self.base.passwd[0]:
@@ -303,17 +302,17 @@ class ServerConnection:
         self.notice(target, '\2\00312error\3: ' + msg)
 
     def stop_input(self):
-        if not 'input data' in threads:
+        if not self.thd_input_code:
             return
 
-        if threads['input data'].isAlive():
+        if thread.thd[self.thd_input_code].isAlive():
             self.stop_threads = True
 
     def info(self, server=""):
         """Send an INFO command."""
         self.send_raw(" ".join(["INFO", server]).strip())
 
-    @thread(1)
+    @thread.thread(init=True)
     def input(self):
         "read and process input from self.socket"
         try:
