@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
-import pylocale
+import i18n
 import traceback
 from config import core
 
@@ -31,9 +31,9 @@ class make:
         else:
             global lang
 
-        locale = pylocale.turn('es',
+        locale = i18n.turn('es',
                  core.obtconfig('package_translate'),
-                 pylocale.parsename(__name__))
+                 i18n.parsename(__name__))
         _ = locale.turn_tr_str
         sn = lambda x: raw_input(x + ' ' + _('s/N', lang) + ' ?> ').lower() in ['s', 'y']
         i = lambda x: raw_input(x + ' ?> ')
@@ -156,7 +156,7 @@ class make:
         print '+' + ('=' * 78) + '+'
         for langcode in locale._tr_aval():
             print '|%-78s|' % ('    [ %s ] %s: %s' %
-            (num, langcode, pylocale.LC_ALL[langcode].decode('utf-8')))
+            (num, langcode, i18n.LC_ALL[langcode].decode('utf-8')))
             num += 1
         print '+' + ('=' * 78) + '+'
 
@@ -275,7 +275,7 @@ class make:
         pr = lambda x: __print__('|%-78s|' % ("    [%-10s]: [%s]" % tuple(x)))
 
         print '+' + ('=' * 78) + '+'
-        pr([_('lenguaje', lang), pylocale.LC_ALL[lang]])
+        pr([_('lenguaje', lang), i18n.LC_ALL[lang]])
         pr([_('prefijo', lang), core.obtconfig('prefix')])
         pr(['mps', core.obtconfig('mps')])
         pr(['plaintext', core.obtconfig('plaintext')])

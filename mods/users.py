@@ -2,10 +2,10 @@
 
 from sysb.config import core
 from sysb import commands
-from sysb import pylocale
+from sysb import i18n
 from irc.connection import servers as base
 
-locale = pylocale.turn(
+locale = i18n.turn(
     'es',
     core.obtconfig('package_translate'),
     'users')
@@ -13,7 +13,7 @@ _ = locale.turn_tr_str
 lang = core.obtconfig('lang')
 
 
-@commands.addHandler(__name__, 'user register', {
+@commands.addHandler('users', 'user register', {
     'sintax': 'user register',
     'example': 'user register',
     'desc': _('registra un usuario en el bot', lang)},
@@ -28,7 +28,7 @@ def register(irc, result, group, other):
         base[irc.base.name][1][other['rpl_whois']])
 
 
-@commands.addHandler(__name__, 'user drop', {
+@commands.addHandler('users', 'user drop', {
     'sintax': 'user drop',
     'example': 'user drop',
     'desc': _('elimina a un usuario registrado', lang)},
@@ -42,7 +42,7 @@ def drop(irc, result, group, other):
     irc.base.nick)
 
 
-@commands.addHandler(__name__, 'user confirm_drop (?P<code>[^ ]+)', {
+@commands.addHandler('users', 'user confirm_drop (?P<code>[^ ]+)', {
     'sintax': 'user confirm_drop <code>',
     'example': 'user confirm_drop 6adf97f83acf6453d4a6a4b1070f3754',
     'desc': _('confirma la eliminacion de un usuario', lang)},
@@ -58,7 +58,7 @@ def confirm_drop(irc, result, group, other):
         irc.notice(group('nick'), _('eliminado correctamente', lang))
 
 
-@commands.addHandler(__name__, 'user lang (?P<langcode>[^ ]+)', {
+@commands.addHandler('users', 'user lang (?P<langcode>[^ ]+)', {
     'sintax': 'user lang <langcode>',
     'example': 'user lang en',
     'desc': _('cambia el idioma que se muestra al usuario', lang)},
@@ -71,7 +71,7 @@ def set_lang(irc, result, group, other):
     if lc == 'list':
         irc.notice(group('nick'), _('codigos de lenguaje disponibles:', lang))
         for lc in locale.locale._tr_aval():
-            irc.notice(group('nick'), '[ %s ] - %s' % (lc, pylocale.ALL[lc]))
+            irc.notice(group('nick'), '[ %s ] - %s' % (lc, i18n.ALL[lc]))
     elif lc in locale.locale._tr_aval():
         base[irc.base.name][1][other['rpl_whois']]['lang'] = lc
         base[irc.base.name][1].save
@@ -80,7 +80,7 @@ def set_lang(irc, result, group, other):
         irc.err(group('nick'), _('codigo de lenguaje invalido', lang))
 
 
-@commands.addHandler(__name__, 'user info( (?P<account>[^ ]+))?', {
+@commands.addHandler('users', 'user info( (?P<account>[^ ]+))?', {
     'sintax': 'user info <account>?',
     'example': 'user info foo',
     'desc': _('muestra informacion de un usuario en userbot', lang)},
@@ -105,7 +105,7 @@ def info(irc, result, group, other):
 
     irc.notice(t, _('nombre de usuario: ', lang) + user['name'])
     irc.notice(t, _('fecha de registro: ', lang) + user['time'])
-    irc.notice(t, _('idioma de usuario: ', lang) + pylocale.ALL(user['lang']))
+    irc.notice(t, _('idioma de usuario: ', lang) + i18n.ALL(user['lang']))
     irc.notice(t, _('nivel del usuario: ', lang) + user['status'])
     irc.notice(t, _('cuenta bloqueada: ', lang) + user['lock'][0])
     if user['lock'][0]:

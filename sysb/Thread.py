@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import thread as th
-
+from thread import start_new
 from threading import Thread as Th
 import logging as logg
 #import logg
@@ -18,7 +17,7 @@ def thread(init=None, n=None, no_class=None):
             mess = 'iniciado'
 
             if no_class:
-                th.start_new(func, args, kwargs)
+                start_new(func, args, kwargs)
             else:
                 thd[name] = Th(target=func, name=name, args=args, kwargs=kwargs)
 
@@ -42,3 +41,4 @@ def thread(init=None, n=None, no_class=None):
 
 def start(target):
     thd[target].start()
+    log.debug('thread({0})[{0}] inciado'.format(target))

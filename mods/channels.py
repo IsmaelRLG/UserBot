@@ -2,13 +2,13 @@
 
 from sysb.config import core
 from sysb import commands
-from sysb import pylocale
+from sysb import i18n
 from irc.connection import servers as base
 
-locale = pylocale.turn(
+locale = i18n.turn(
     'es',
     core.obtconfig('package_translate'),
-    pylocale.parsename(__name__))
+    'channels')
 _ = locale.turn_tr_str
 lang = core.obtconfig('lang')
 
@@ -37,8 +37,8 @@ def register(irc, result, group, other):
         irc.notice(other['target'], _('canal registrado correctamente', lang))
 
 
-@commands.addHandler(__name__, 'chan flags( (?P<channel>#[^ ]+) )?(?<target>' +
-    '[^ ]+) (?P<flags>[^ ]+)', {
+@commands.addHandler(__name__, 'chan flags( (?P<channel>#[^ ]+) )?(?P<target>[^'
+    ' ]+) (?P<flags>[^ ]+)', {
     'sintax': 'chan flags <channel>? <target> <flags>',
     'example': 'chan flags #Foo-chan foo-user OP',
     'desc': _('(añade / elimina / edita / muestra) los flags', lang)},

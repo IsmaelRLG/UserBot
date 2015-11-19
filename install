@@ -48,7 +48,7 @@ class userbot:
         self.shell('cp -R sysb ' + self.dir, no_out=True)
         self.shell('cp -R mods ' + self.dir, no_out=True)
         self.shell('cp -R db ' + self.dir, no_out=True)
-        self.shell('cp LICENSE ' + self.dir, no_out=True)
+        #self.shell('cp LICENSE ' + self.dir, no_out=True)
         self.shell('cp userbot /usr/bin', no_out=True)
         self.shell('chmod 777 /usr/bin/userbot', no_out=True)
         self.shell('chmod 777 -R ' + self.dir, no_out=True)

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import client
+import output
 
 from sysb.config import core
 from sysb import katheryn
@@ -31,9 +32,9 @@ def load_connections():
     if ircbase is None:
         return
 
-    output = client.output()
-    output.start()
-    __output__.append(output)
+    out = output.output()
+    out.start()
+    __output__.append(out)
 
     for base in ircbase:
         servers[base.name] = [client.ServerConnection(base)]

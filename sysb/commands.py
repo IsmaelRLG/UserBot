@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import re, os, imp, logg, types, thread, traceback, pylocale
+import re, os, imp, logg, types, Thread, traceback, i18n
 
 from config import core
 from irc.client import buffer_input
@@ -8,10 +8,10 @@ from irc.request import whois
 from irc.connection import servers
 
 log = logg.getLogger(__name__)
-locale = pylocale.turn(
+locale = i18n.turn(
     'es',
     core.obtconfig('package_translate'),
-    pylocale.parsename(__name__))
+    'commands')
 _ = locale.turn_tr_str
 
 
@@ -53,9 +53,10 @@ class commands(object):
                 continue
 
             if os.path.isfile('mods/' + name):
-                resul = re.match('(?P<name>.+)\.(?P<ext>(py|pyc))', name, 2)
+                resul = re.match('(?P<name>.+)\.(?P<ext>py$|pyc$)', name, 2)
                 if resul and resul.group('ext') == 'py':
-                    __module__ = imp.find_module('mods/' + resul.group('name'))
+                    name = resul.group('name')
+                    __module__ = imp.find_module('mods/' + name)
                 else:
                     continue
 
@@ -65,6 +66,8 @@ class commands(object):
             elif os.path.islink('mods/' + name):
                 __module__ = imp.find_module(os.readlink('mods/' + name))
 
+            for s in __module__:
+                print [s]
             self[name] = {'module': __module__, 'handlers': []}
 
         for name, args in self:
@@ -153,7 +156,7 @@ class commands(object):
 
         return rpl_whois
 
-    @thread.thread(init=True)
+    @Thread.thread(no_class=True)
     def endless_process(self):
         prefix = core.obtconfig('prefix')
         while True:
@@ -172,7 +175,7 @@ class commands(object):
                 else:
                     channel = None
 
-            except IndexError:
+            except (IndexError, AttributeError):
                 continue
 
             for mod, dict in self:
@@ -222,8 +225,25 @@ def addHandler(module, regex, help, anyuser=None, registered=None, oper=None,
               channels=None, chn_registered=None, privs=None, chan_reqs=None,
               thread=None, logged=None, no_prefix=False):
     def handler(func):
-        if not vars() in commands.modules[module]['handlers']:
-            commands[pylocale.parsename(module)]['handlers'].append(vars())
+        vars = {}
+        vars['module'] = module
+        vars['regex'] = regex
+        vars['help'] = help
+        vars['anyuser'] = anyuser
+        vars['registered'] = registered
+        vars['oper'] = oper
+        vars['channels'] = channels
+        vars['chn_registered'] = chn_registered
+        vars['privs'] = privs
+        vars['chan_reqs'] = chan_reqs
+        vars['thread'] = thread
+        vars['logged'] = logged
+        vars['no_prefix'] = no_prefix
+        vars['func'] = func
+
+        if not vars in commands.modules[module]['handlers']:
+            commands[module]['handlers'].append(vars)
+            log.debug('handler [%s][%s] agregado' % (module, func.__name__))
 
         def wrapper(*args, **kwargs):
             if thread:

@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import socket
-import struct
-import random
 import ssl
 import Queue
-import six
 import traceback
 import time
 import re
@@ -14,7 +11,7 @@ import features
 import ircregex
 
 from sysb import logg
-from sysb import thread
+from sysb import Thread
 from sysb.config import core as config
 from output import buffer_output
 from util import always_iterable
@@ -144,7 +141,7 @@ class ServerConnection:
                 # Si llego hasta aca es que ningun handler se ejecuto.
                 # Solo "NOTICE" y "PRIVMSG"
                 if name in ('NOTICE', 'PRIVMSG'):
-                    buffer_input.put(self, match_result.group)
+                    buffer_input.put((self, match_result.group))
                     break
 
     def _process_handler(self, name, method_group, level):
@@ -299,20 +296,20 @@ class ServerConnection:
             pass
 
     def err(self, target, msg):
-        self.notice(target, '\2\00312error\3: ' + msg)
+        self.notice(target, '\2\00305error\3: ' + msg)
 
     def stop_input(self):
         if not self.thd_input_code:
             return
 
-        if thread.thd[self.thd_input_code].isAlive():
+        if Thread.thd[self.thd_input_code].isAlive():
             self.stop_threads = True
 
     def info(self, server=""):
         """Send an INFO command."""
         self.send_raw(" ".join(["INFO", server]).strip())
 
-    @thread.thread(init=True)
+    @Thread.thread(init=True)
     def input(self):
         "read and process input from self.socket"
         try:
@@ -475,7 +472,6 @@ class ServerConnection:
 
     def send_raw(self, string):
         """Añade una cadena al queue para ser enviada."""
-        print 'send %s' % id(buffer_output)
         buffer_output.put({
             'msg': string,
             'socket': self.socket,

@@ -206,29 +206,3 @@ def ip_quad_to_numstr(quad):
     bytes = map(int, quad.split("."))
     packed = struct.pack('BBBB', *bytes)
     return str(struct.unpack('>L', packed)[0])
-
-threads = {}
-
-
-def thread(action, name=None):
-    def wawe(func):
-        def tururu(*args, **kwargs):
-            def does_nothing(*a, **b):
-                pass
-
-            if name:
-                _name_ = name
-            else:
-                _name_ = str(func)
-
-            from threading import Thread
-            threads.update({_name_:
-            Thread(target=func, name=_name_, args=args, kwargs=kwargs)})
-
-            if action is 1:
-                log.debug('function "%s" started' % _name_)
-                threads[_name_].start()
-
-            return does_nothing(*args, **kwargs)
-        return tururu
-    return wawe

@@ -5,14 +5,13 @@ import Queue
 import socket
 import textwrap
 
-from sysb import thread
+from sysb import Thread
 from sysb import logg
 from sysb.config import core
 
 buffer_output = Queue.Queue()
 log = logg.getLogger(__name__)
 
-print id(buffer_output)
 
 class output(object):
     """
@@ -24,13 +23,13 @@ class output(object):
         self._stop = False
 
     def begun(self):
-        return thread.thd['output'].isAlive()
+        return Thread.thd['output'].isAlive()
 
     def start(self):
-        if 'output' in thread.thd:
-            thread.start('output')
+        if 'output' in Thread.thd:
+            Thread.start('output')
 
-    @thread.thread(n='output')
+    @Thread.thread(n='output')
     def process_queue(self):
         """
         Procesando el queue de salida.
@@ -39,12 +38,8 @@ class output(object):
         plaintext = core.obtconfig('plaintext')
         mps = core.obtconfig('mps')
         while self._stop is False:
-            print 3
-            print 'size %s' % buffer_output.qsize()
             out = buffer_output.get()
-            print 4
             if out == 0:  # Saliendo! D:
-                print 5
                 break
 
             # According to the RFC http://tools.ietf.org/html/rfc2812#page-6,

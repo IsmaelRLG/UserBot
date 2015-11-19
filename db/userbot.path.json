@@ -1,0 +1,21 @@
+{
+"make_config": {
+    "func": "_",
+    "path": "sysb/make_config.py",
+    "lc": "es"},
+
+"commands": {
+    "func": "_",
+    "path": "sysb/commands.py",
+    "lc": "es"},
+
+"users": {
+    "func": "_",
+    "path": "mods/users.py",
+    "lc": "es"},
+
+"channels": {
+    "func": "_",
+    "path": "mods/channels.py",
+    "lc": "es"}
+}
