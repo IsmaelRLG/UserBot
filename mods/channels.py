@@ -37,8 +37,8 @@ def register(irc, result, group, other):
         irc.notice(other['target'], _('canal registrado correctamente', lang))
 
 
-@commands.addHandler(__name__, 'chan flags( (?P<channel>#[^ ]+) )?(?P<target>[^'
-    ' ]+) (?P<flags>[^ ]+)', {
+@commands.addHandler(__name__, 'chan flags( (?P<channel>#[^ ]+))? (?P<target>[^'
+    ' ]+) (?P<flags>[^ ]+)',{
     'sintax': 'chan flags <channel>? <target> <flags>',
     'example': 'chan flags #Foo-chan foo-user OP',
     'desc': _('(añade / elimina / edita / muestra) los flags', lang)},
@@ -57,6 +57,7 @@ def flags(irc, result, group, other):
             irc.notice(other['target'], '[ %s ] | %-25s | [ %s ]' %
             (str(num).zfill(2), us, fl))
             num += 1
+        return
 
     if not base[irc.base.name][1][result('target')]:
         irc.err(other['target'], _('usuario no registrado en el bot', lang))
@@ -66,14 +67,21 @@ def flags(irc, result, group, other):
         irc.notice(other['target'], '[ 01 ] | %-25s | [ %s ]' %
         (result('target'), base[irc.base.name][2].flags('get',
         other['channel'], result('target').lower())))
+        return
 
     else:
         before = base[irc.base.name][2].flags(
         'get', other['channel'], result('target').lower())
 
         if result('flags')[0] in '+-':
+            if 'F' in result('flags'):
+                irc.err(other['target'], _('permiso denegado', lang))
+                return
             kwargs = {'flag': result('flags')}
         else:
+            if 'founder'.lower() in result('flags'):
+                irc.err(other['target'], _('permiso denegado', lang))
+                return
             kwargs = {'template': result('flags')}
 
         base[irc.base.name][2].flags('set',
@@ -83,7 +91,7 @@ def flags(irc, result, group, other):
         'get', other['channel'], result('target').lower())
 
         irc.notice(other['target'], _('flags actualizado:', lang) +
-        str((before, after)))
+        " [%s] - (%s) >> (%s)" % (result('target'), before, after))
 
 
 @commands.addHandler(__name__, 'chan drop( (?P<channel>#[^ ]+))?', {

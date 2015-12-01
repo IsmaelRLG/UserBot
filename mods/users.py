@@ -19,13 +19,15 @@ lang = core.obtconfig('lang')
     'desc': _('registra un usuario en el bot', lang)},
     logged=True)
 def register(irc, result, group, other):
+    lc = other['global_lang']
     result = base[irc.base.name][1].register(other['rpl_whois'])
+    print result
     if result == 6:
-        lang = base[irc.base.name][1][other['rpl_whois']]['lang']
-        irc.err(group('nick'), _('usuario ya registrado', lang))
+        lc = base[irc.base.name][1][other['rpl_whois']]['lang']
+        irc.err(group('nick'), _('usuario ya registrado', lc))
     else:
-        irc.notice(group('nick'), _('registrado correctamente: "%s"', lang) %
-        base[irc.base.name][1][other['rpl_whois']])
+        irc.notice(group('nick'), _('registrado correctamente: "%s"', lc) %
+        base[irc.base.name][1][other['rpl_whois']]['name'])
 
 
 @commands.addHandler('users', 'user drop', {
@@ -49,8 +51,8 @@ def drop(irc, result, group, other):
     registered=True,
     logged=True)
 def confirm_drop(irc, result, group, other):
-    num_resl = base[irc.base.name][1].drop(result('code'))
     lang = base[irc.base.name][1][other['rpl_whois']]['lang']
+    num_resl = base[irc.base.name][1].drop(result('code'))
     if num_resl in (0, None):
         irc.err(group('nick'), _('codigo invalido', lang))
     else:
@@ -61,7 +63,9 @@ def confirm_drop(irc, result, group, other):
 @commands.addHandler('users', 'user lang (?P<langcode>[^ ]+)', {
     'sintax': 'user lang <langcode>',
     'example': 'user lang en',
-    'desc': _('cambia el idioma que se muestra al usuario', lang)},
+    'desc': (
+      _('cambia el idioma que se muestra al usuario', lang),
+      _('extra: codigo especial "list" muestra los idiomas soportados', lang))},
     registered=True,
     logged=True)
 def set_lang(irc, result, group, other):
@@ -70,9 +74,9 @@ def set_lang(irc, result, group, other):
 
     if lc == 'list':
         irc.notice(group('nick'), _('codigos de lenguaje disponibles:', lang))
-        for lc in locale.locale._tr_aval():
-            irc.notice(group('nick'), '[ %s ] - %s' % (lc, i18n.ALL[lc]))
-    elif lc in locale.locale._tr_aval():
+        for lc in locale._tr_aval():
+            irc.notice(group('nick'), '[ %s ] - %s' % (lc, i18n.LC_ALL[lc]))
+    elif lc in locale._tr_aval():
         base[irc.base.name][1][other['rpl_whois']]['lang'] = lc
         base[irc.base.name][1].save
         irc.notice(group('nick'), _('idioma actualizado', lc))
@@ -87,10 +91,14 @@ def set_lang(irc, result, group, other):
     anyuser=True)
 def info(irc, result, group, other):
     from irc.request import whois
-    rpl = whois(group('nick'))
+    rpl = whois(irc, group('nick'))
     account = result('account')
-    if rpl['is logged'] and base[irc.base.name][1][rpl['is logged']]:
-        lang = base[irc.base.name][1][rpl['is logged']]['lang']
+    lc = other['global_lang']
+    if rpl['is logged']:
+        if base[irc.base.name][1][rpl['is logged']]:
+            lc = base[irc.base.name][1][rpl['is logged']]['lang']
+        else:
+            print None
         if not account:
             account = rpl['is logged']
 
@@ -100,13 +108,13 @@ def info(irc, result, group, other):
     user = base[irc.base.name][1][account]
     t = other['target']
     if not user:
-        irc.err(t, _('usuario no registrado', lang))
+        irc.err(t, _('usuario no registrado', lc) + ': ' + account)
         return
 
-    irc.notice(t, _('nombre de usuario: ', lang) + user['name'])
-    irc.notice(t, _('fecha de registro: ', lang) + user['time'])
-    irc.notice(t, _('idioma de usuario: ', lang) + i18n.ALL(user['lang']))
-    irc.notice(t, _('nivel del usuario: ', lang) + user['status'])
-    irc.notice(t, _('cuenta bloqueada: ', lang) + user['lock'][0])
+    irc.notice(t, _('nombre de usuario: ', lc) + user['name'])
+    irc.notice(t, _('fecha de registro: ', lc) + user['time'])
+    irc.notice(t, _('idioma de usuario: ', lc) + i18n.LC_ALL[user['lang']])
+    irc.notice(t, _('nivel del usuario: ', lc) + user['status'])
+    irc.notice(t, _('cuenta bloqueada: ', lc) + str(user['lock'][0]))
     if user['lock'][0]:
-        irc.notice(t, _('razon de bloqueo: ', lang) + user['lock'][1])
+        irc.notice(t, _('razon de bloqueo: ', lc) + user['lock'][1])
