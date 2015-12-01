@@ -3,7 +3,6 @@
 from thread import start_new
 from threading import Thread as Th
 import logging as logg
-#import logg
 
 log = logg.getLogger(__name__)
 thd = {}
@@ -26,7 +25,7 @@ def thread(init=None, n=None, no_class=None):
                 else:
                     mess = 'agregado'
 
-            log.debug('thread(%s)[%s] %s' % (n, name, mess))
+            log.debug('thread(%s)[%s] %s - %s' % (n, name, mess, func.__name__))
 
             def does_nothing(*a, **b):
                 if no_class:

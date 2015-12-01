@@ -6,7 +6,6 @@ import output
 from sysb.config import core
 from sysb import katheryn
 from handlers import *
-
 __output__ = []
 servers = {}
 
@@ -44,6 +43,3 @@ def load_connections():
         katheryn.channels(servers[base.name][0], 'chn'))
         if base.connect_to_beginning:
             servers[base.name][0].connect()
-
-            for uuid, channel in servers[base.name][2]:
-                servers[base.name][0].join(channel['name'])

@@ -19,11 +19,8 @@ class commands(object):
 
     def __init__(self):
         self.modules = {}
-        self.handler_locks = core.obtconfig('handler_locks')
-        if not self.handler_locks:
-            self.handler_locks = {}
-            core.addconfig('handler_locks', self.handler_locks)
         self.endless_process()
+        self.lang = core.obtconfig('lang')
 
     def __getitem__(self, key):
         try:
@@ -66,8 +63,6 @@ class commands(object):
             elif os.path.islink('mods/' + name):
                 __module__ = imp.find_module(os.readlink('mods/' + name))
 
-            for s in __module__:
-                print [s]
             self[name] = {'module': __module__, 'handlers': []}
 
         for name, args in self:
@@ -83,8 +78,11 @@ class commands(object):
                     return True
             except:
                 log.error('el modulo %s contiene errores' % name)
-                for err in traceback.format_exc().splitlines():
+                error = traceback.format_exc().splitlines()
+                for err in error:
                     log.error(err)
+                if module:
+                    return error
 
     def download_module(self, module):
         if self[module]:
@@ -102,8 +100,10 @@ class commands(object):
                 return True
             except:
                 log.error('el modulo %s contiene errores' % module)
-                for err in traceback.format_exc().splitlines():
+                error = traceback.format_exc().splitlines()
+                for err in error:
                     log.error(err)
+                return error
 
     #======================================================================#
     #                         procesando comandos                          #
@@ -115,14 +115,14 @@ class commands(object):
 
         if handler['logged']:
             rpl_whois = whois(irc, nick)
-            lang = core.obtconfig('lang')
+            lang = self.lang
 
             if not rpl_whois['is logged']:
                 irc.err(nick, _('debe loguearse via nickserv', lang))
                 return
 
+        user = servers[irc.base.name][1][rpl_whois['is logged']]
         if handler['registered']:
-            user = servers[irc.base.name][1][rpl_whois['is logged']]
             if not user:
                 irc.err(nick, _('no se encuentra registrado, registrese', lang))
                 return
@@ -135,21 +135,23 @@ class commands(object):
                 return
 
         if handler['oper']:
-            if user['status'] in handler['oper']:
-                irc.err(nick, _('comando solo para operadores', lang))
+            if not user['status'] in handler['oper']:
+                irc.err(nick, _('comando solo para operadores: ', lang) +
+                ', '.join(handler['oper']))
                 return
 
         if handler['channels']:
-            if not channel or not channel[0] in irc.features.chantypes:
+            if not channel or not channel[0] in '#':
                 irc.err(nick, _('debe ingresar un canal valido', lang))
                 return
 
             if handler['chn_registered']:
                 if not servers[irc.base.name][2][channel]:
-                    irc.err(nick, _('canal no registrado, registrelo.'))
+                    irc.err(nick, _('canal "%s" no registrado, registrelo.', lang) % channel)
+                    return
 
             if handler['privs']:
-                if not servers[irc.base.name][2][channel]['flags'].privs(channel,
+                if not servers[irc.base.name][2].privs(channel,
                     rpl_whois['is logged'].lower(), handler['privs']):
                     irc.err(nick, _('permiso denegado', lang))
                     return
@@ -158,35 +160,56 @@ class commands(object):
 
     @Thread.thread(no_class=True)
     def endless_process(self):
-        prefix = core.obtconfig('prefix')
+        import time
+        time.sleep(2)
+        print ('-' * 15) + str(1) + ('-' * 15)
+        global_prefix = core.obtconfig('prefix')
+        time.sleep(2)
+        print ('-' * 15) + str(2) + ('-' * 15)
+        global_lang = self.lang
+        print ('-' * 15) + str(3) + ('-' * 15)
         while True:
+            print ('-' * 15) + str(4) + ('-' * 15)
             irc, group = buffer_input.get()
+            print ('-' * 15) + str(5) + ('-' * 15)
 
             try:
                 nickbot = irc.base.nick
                 nick = group('nick')
+                print [nick, nickbot]
 
-                if nickbot == nick:
+                if nickbot.lower() in (nick.lower(), 'nickserv', 'chanserv'):
+                    print ('-' * 15) + str(6) + ('-' * 15)
                     continue
 
                 target = group('target')
-                if target[0] in irc.features.chantypes:
+                if target[0] in '#':
                     channel = target
                 else:
                     channel = None
 
-            except (IndexError, AttributeError):
+            except AttributeError:
+                print ('-' * 15) + str(7) + ('-' * 15)
+                continue
+            except IndexError:
+                print ('-' * 15) + str(8) + ('-' * 15)
                 continue
 
             for mod, dict in self:
+                print ('-' * 15) + str(9) + ('-' * 15)
+                if_break = False
                 for handler in dict['handlers']:
-
                     try:
                         if not handler['no_prefix']:
-                            prefix = ('({}([:;, ] ?)|{})'.format(re.escape(nickbot),
-                            re.escape(prefix)) if target != nickbot else '')
+                            prefix = ('^({}([:;, ] ?)|{})'.format(re.escape(nickbot),
+                            re.escape(global_prefix)) if target != nickbot else '')
                         else:
                             prefix = ''
+
+                        if target != nickbot:
+                            if not re.match(prefix + '.*', group('message'), 2):
+                                if_break = True
+                                break
 
                         result = re.match(prefix +
                         handler['regex'], group('message'), 2)
@@ -201,13 +224,14 @@ class commands(object):
                         continue
 
                     if not channel and handler['chan_reqs']:
-                        channel = group(handler['chan_reqs'])
+                        channel = result.group(handler['chan_reqs'])
 
                     if target == nickbot:
                         target = nick
 
                     rpl_whois = self.security(handler, irc, nick, channel)
                     if not rpl_whois:
+                        if_break = False
                         break
                     else:
                         try:
@@ -216,7 +240,11 @@ class commands(object):
                             for line in traceback.format_exc().splitlines():
                                 irc.err(target, line)
                         finally:
+                            if_break = True
                             break
+
+                if if_break:
+                    break
 
 commands = commands()
 

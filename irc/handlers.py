@@ -57,14 +57,15 @@ def error(self, name, group):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     sleep(10)
+    self.registered = False
     self.connect()
     return True
 
 
 @handler('privmsg')
 def version(self, name, group):
-    if group('message').endswith("\001VERSION\001") and \
-        group('message').startswith("\001VERSION\001"):
+    if group('message').upper().endswith("\001VERSION\001") and \
+        group('message').upper().startswith("\001VERSION\001"):
         vrn = config.obtconfig('VERSION')
         vrn = (vrn[0] + ' ' + '.'.join(str(num) for num in vrn[1:]))
         self.ctcp_reply(group('nick'), vrn)
@@ -98,6 +99,11 @@ def registration_successful(self, name, group):
     from client import log
     log.info('Registro completado')
     self.attempted = 0
+
+    from connection import servers
+
+    for uuid, channel in servers[self.base.name][2]:
+        self.join(channel['name'])
 
 
 @handler('err_nicknameinuse')

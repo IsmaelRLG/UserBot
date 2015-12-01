@@ -60,7 +60,6 @@ class make:
                     continue
 
                 for func in make_handlers:
-                    #print func.__name__
                     if func.__name__ == name:
                         func(self)
                         raise GeneratorExit
@@ -208,13 +207,15 @@ class make:
 
             name = i('')
             for server in ircbase:
-                if name is server.name:
-                    if server.name == name:
-                        level = (level, server.name)
-                        break
+                if name == server.name:
+                    print [server.name, name, server.name == name]
+                    level = (level, server.name)
+                    break
 
+            print level
             if not isinstance(level, tuple):
                 print _('el servidor no existe', lang)
+                return
 
         kwargs = vars()
         del kwargs['self']
@@ -304,7 +305,7 @@ class make:
         if not isinstance(core.obtconfig('plaintext'), bool):
             core.addconfig('plaintext', False)
 
-        if sn(_('¿guardar texto plano?')):
+        if sn(_('guardar texto plano?', lang)):
             core.upconfig('plaintext', True)
 
     @handler

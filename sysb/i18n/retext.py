@@ -21,8 +21,8 @@ class turn(main.i18n):
         return self.json[self.module].keys()
 
     def turn_tr_str(self, string, lc=None):
-        string = unicode(string.decode('utf-8')).lower()
-        if lc is self.lang_o:
+        string = string
+        if lc == self.lang_o:
             return string
 
         if lc is None:
@@ -39,7 +39,7 @@ class turn(main.i18n):
                 lc = self.lang_o
 
         try:
-            s = string
+            s = string.lower()
             return self.json[self.module][lc][unicode(hash(s))]
         except KeyError:
             error = '[%s][%s][%s](%s)' % (self.module, lc, unicode(hash(s)), s)

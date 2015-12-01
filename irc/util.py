@@ -64,7 +64,7 @@ def uuid(string):
     Argumentos:
         string -- Cadena a convertir a uuid.
     """
-    return _uuid_.uuid5(uuid.NAMESPACE_DNS, string.lower())
+    return _uuid_.uuid5(_uuid_.NAMESPACE_DNS, string.lower())
 
 
 def save_method_args(method):

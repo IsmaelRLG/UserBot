@@ -38,6 +38,9 @@ class database(object):
         self.irc = ircobject
         self.name = name
         self.lang = core.obtconfig('lang')
+        if not self.lang:
+            time.sleep(2)
+            self.lang = core.obtconfig('lang')
         self.__core__ = core.obtconfig(name + '_' + self.irc.base.name)
         if not self.__core__:
             self.__core__ = {}
@@ -49,16 +52,16 @@ class database(object):
 
     def __getitem__(self, key):
         try:
-            return self.__core__[util.uuid(key)]
+            return self.__core__[str(util.uuid(key.lower()))]
         except KeyError:
             pass
 
     def __setitem__(self, key, item):
-        self.__core__[util.uuid(key)] = item
+        self.__core__[str(util.uuid(key.lower()))] = item
         self.save
 
     def __delitem__(self, key):
-        del self.__core__[util.uuid(key)]
+        del self.__core__[str(util.uuid(key.lower()))]
         self.save
 
     def __repr__(self):
@@ -89,20 +92,18 @@ class database(object):
 class users(database):
 
     def __getitem__(self, key):
-        try:
-            key.result
-        except AttributeError:
+        if not isinstance(key, str):
             key = key['is logged']
             if key is None:
                 return
 
         try:
-            return self.__core__[util.uuid(key)]
+            return self.__core__[str(util.uuid(key))]
         except KeyError:
             pass
 
     def register(self, rpl_whois):
-        if rpl_whois['is logged']:
+        if not rpl_whois['is logged']:
             return OPERATION_FAILED
 
         if self[rpl_whois['is logged']]:
@@ -112,7 +113,7 @@ class users(database):
 
         self[user] = {
             'name': user,
-            'time': time.time(),
+            'time': time.ctime(),
             'lang': self.lang,
             'lock': [False],
             'status': 'user'}
@@ -132,19 +133,32 @@ class users(database):
 
     def gendropcode(self, rpl_whois):
         from hashlib import md5
-
-        code = md5(hash(self[rpl_whois['is logged']])).hexdigest()
+        code = md5(str(hash(self[rpl_whois['is logged']]['name']))).hexdigest()
         self.post[code] = rpl_whois['is logged']
         return code
 
     def operid(self, name, passwd, rpl_whois):
         for oper in core.obtconfig('opers'):
-            if oper['user'] == name and oper['passwd'] == util.uuid(passwd):
-                if len(oper['level']) == 2 and oper['level'][1] != self.server:
-                    return OPERATION_FAILED
+            if oper['user'] == name and oper['passwd'] == util.hash(passwd):
+                if isinstance(oper['level'], tuple):
+                    lvl = oper['level'][0]
+                    server = oper['level'][1]
                 else:
-                    self[rpl_whois['is logged']]['status'] = oper['level'][0]
-                    break
+                    lvl = oper['level']
+                    server = self.irc.base.name
+
+                ok = False
+
+                if lvl in ('local', 'noob') and server == self.irc.base.name:
+                    ok = True
+                elif lvl == 'global':
+                    ok = True
+
+                if ok:
+                    self[rpl_whois['is logged']]['status'] = lvl
+                    return OPERATION_SUCCESSFULL
+                else:
+                    return OPERATION_FAILED
         return INVALID_PARAMETER
 
 #==============================================================================#
@@ -181,11 +195,11 @@ class channels(database):
 
             if template:
                 template = template.lower()
-                if not template in self[channel]['template']:
+                if not template in self[channel]['templates']:
                     return INVALID_PARAMETER
 
                 self[channel]['flags'][account] =\
-                self[channel]['template'][template]
+                self[channel]['templates'][template]
             elif flag:
                 for op, ___, null in modes._parse_modes(flag, 'FLOSVbikmorstv'):
                     # op (operator) == -|+
@@ -213,7 +227,7 @@ class channels(database):
             return OPERATION_SUCCESSFULL
 
         def get(channel, account, **kwargs):
-            if not account in self[channel]:
+            if not account in self[channel]['flags']:
                 return
             return self[channel]['flags'][account]
 

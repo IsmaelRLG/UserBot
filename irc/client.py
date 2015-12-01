@@ -100,7 +100,7 @@ class ServerConnection:
         self.attempted = 0
 
         # Cargando los handlers locales D:
-        self.local_handlers = config.obtconfig('local_handlers')
+        self.local_handlers = None
 
         # Solo por si es su primera vez xD
         if self.local_handlers is None:
@@ -119,7 +119,6 @@ class ServerConnection:
                 line = line.rstrip('\n').rstrip('\r')
 
         for name, regex in ircregex.ALL.items():
-            #print [name, regex]
             if name is 'ALL':
                 continue
 
@@ -129,7 +128,6 @@ class ServerConnection:
                 log.warning('regex invalida: ' + str(error))
 
             if match_result:
-                #log.info('regex procesada: ' + str([name, regex]))
                 # Procesando los handlers globales...
                 if self._process_handler(name, match_result.group, 'global'):
                     break
@@ -140,7 +138,10 @@ class ServerConnection:
 
                 # Si llego hasta aca es que ningun handler se ejecuto.
                 # Solo "NOTICE" y "PRIVMSG"
-                if name in ('NOTICE', 'PRIVMSG'):
+                print '/%s/' % name
+                if name in ('NOTICE', 'PRIVMSG') and \
+                not match_result.group('target') in ('*', 'Auth'):
+                    print [name, match_result.group('target')]
                     buffer_input.put((self, match_result.group))
                     break
 
@@ -296,7 +297,7 @@ class ServerConnection:
             pass
 
     def err(self, target, msg):
-        self.notice(target, '\2\00305error\3: ' + msg)
+        self.notice(target, '\2\00305error\3:\2 ' + msg)
 
     def stop_input(self):
         if not self.thd_input_code:
@@ -412,7 +413,6 @@ class ServerConnection:
 
     def notice(self, target, text):
         """Send a NOTICE command."""
-        # Should limit len(text) here!
         self.send_raw("NOTICE %s :%s" % (target, text))
 
     def oper(self, nick, password):
@@ -467,7 +467,6 @@ class ServerConnection:
                 var[priority].remove(func)
 
         # Guardando la configuracion mas actual
-        #config.upconfig(name + '_handlers', var)
         log.info('handler %s eliminado: %s' % (name, function.__name__))
 
     def send_raw(self, string):
