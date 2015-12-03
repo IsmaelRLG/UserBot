@@ -81,7 +81,6 @@ class IRCBase(object):
 
 
 class ServerConnection:
-    connected = False
     stop_threads = False
     sleep_time = 0
     last_time = 0
@@ -93,11 +92,14 @@ class ServerConnection:
         Argumentos:
             base -- Objeto IRCBase, (obtenido de la base de datos)
         """
+        self.connected = False
         self.features = features.FeatureSet()
         self.base = base
         self.thd_input_code = None
         self.joiner = []
         self.attempted = 0
+        self.attempted_limit = 9
+        self.sleep = 0
 
         # Cargando los handlers locales D:
         self.local_handlers = None
@@ -107,6 +109,38 @@ class ServerConnection:
             self.local_handlers = {}
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    def _connect(self):
+        if self.attempted > self.attempted_limit:
+            self.attempted = 0
+            log.info('Abortando conexion para ' + self.base.name)
+            return False
+        else:
+            self.attempted += 1
+
+        time.sleep(self.sleep)
+        try:
+            log.info('Buscando ' + self.base.host)
+            self.socket.connect((self.base.host, self.base.port))
+
+            if self.base.ssl is True:
+                self.socket = ssl.wrap_socket(self.socket)
+                log.info('Usando SSL para %s...' % self.base.name)
+
+            log.info('Conectado a %s (%s) puerto %s...' % (
+                self.base.host,
+                self.socket.getpeername()[0],
+                self.base.port))
+        except Exception as error:
+            log.error(error)
+            if self.sleep == 0:
+                self.sleep = 5
+            else:
+                self.sleep = ((self.sleep * 70) / 100) + self.sleep
+            self._connect()
+        else:
+            log.info('Ahora registrándose...')
+            return True
 
     def _process_line(self, line):
         """
@@ -229,36 +263,12 @@ class ServerConnection:
         """
         Conecta o reconecta a un servidor.
         """
-        #if self.connected:
-            #return log.error('Ya estas conectado a %s!' % self.base.name)
 
-        if self.attempted > 3:
-            self.attempted = 0
+        if not self._connect():
             return
-        else:
-            self.attempted += 1
 
-        try:
-            log.info('Buscando ' + self.base.host)
-            self.socket.connect((self.base.host, self.base.port))
-
-            if self.base.ssl is True:
-                self.socket = ssl.wrap_socket(self.socket)
-                log.info('Usando SSL para %s...' % self.base.name)
-
-            log.info('Conectado a %s (%s) puerto %s...' % (
-                self.base.host,
-                self.socket.getpeername()[0],
-                self.base.port))
-        except:
-            for line in traceback.format_exc().splitlines():
-                log.error(line)
-            return
-        else:
-            log.info('Ahora registrándose...')
-
-        # Procesando la salida y entrada de datos.
-        if not self.connected:
+        # Procesando la entrada de datos.
+        if self.connected is False:
             self.connected = True
             self.thd_input_code = self.input()
 
