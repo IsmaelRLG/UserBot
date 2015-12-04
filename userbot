@@ -13,16 +13,6 @@ def main():
 
     if sys.argv[1] in ('--start', '--restart'):
         import coloredlogs
-        level = 40
-        for arg in sys.argv:
-            if arg.find('--debug=') != -1:
-                lvl = int(arg.split('--debug=').pop())
-                if not lvl in (0, 10, 20, 30, 40, 50):
-                    break
-                else:
-                    level = lvl
-                    break
-
         if '--debug=1' in sys.argv:
             coloredlogs.install(10)
 
@@ -37,13 +27,10 @@ def main():
                       pidfile='/tmp/userbot.pid',
                       startmsg='UserBot started with PID: %s')
             os.chdir(PATH)
-            if 'lvl' in vars():
-                pass
 
         if not os.path.exists('db/userbot'):
             import logging
             logging.error('missing database file!')
-
             return
 
         from sysb.commands import commands

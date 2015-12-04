@@ -11,7 +11,7 @@ from handlers import method_handler as handler
 
 
 class cache:
-    time_limit = 3.8
+    time_limit = 60
     uses_limit = 3
     cache = {}
 
@@ -120,6 +120,7 @@ class request(object):
             irc.remove_handler(self.func_reqs, -1, 'local')
 
         self.result = r
+        print r
 
     def __getitem__(self, item):
         try:
@@ -155,9 +156,11 @@ class whois(request):
                 'realname': group('realname')}
             return True
 
-        elif name == 'rpl_whoislogged' and group('username') == self.target:
-            self.result['is logged'] = group('account')
-            return True
+        elif name == 'rpl_whoislogged':
+            print [0, 0, group('username'), self.target, 0, 0]
+            if group('username') == self.target:
+                self.result['is logged'] = group('account')
+                return True
 
         elif name == 'rpl_endofwhois' and group('nick') == self.target:
             self.queue.put(self.result)

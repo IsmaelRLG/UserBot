@@ -172,10 +172,8 @@ class ServerConnection:
 
                 # Si llego hasta aca es que ningun handler se ejecuto.
                 # Solo "NOTICE" y "PRIVMSG"
-                print '/%s/' % name
                 if name in ('NOTICE', 'PRIVMSG') and \
                 not match_result.group('target') in ('*', 'Auth'):
-                    print [name, match_result.group('target')]
                     buffer_input.put((self, match_result.group))
                     break
 
@@ -233,7 +231,7 @@ class ServerConnection:
         """Send an ADMIN command."""
         self.send_raw(" ".join(["ADMIN", server]).strip())
 
-    def cap(self, command, sub):
+    def cap(self, command, sub=None):
         """
         Send a CAP command according to `the spec
         <http://ircv3.atheme.org/specification/capability-negotiation-3.1>`_.

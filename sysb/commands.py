@@ -162,24 +162,17 @@ class commands(object):
     def endless_process(self):
         import time
         time.sleep(2)
-        print ('-' * 15) + str(1) + ('-' * 15)
         global_prefix = core.obtconfig('prefix')
         time.sleep(2)
-        print ('-' * 15) + str(2) + ('-' * 15)
         global_lang = self.lang
-        print ('-' * 15) + str(3) + ('-' * 15)
         while True:
-            print ('-' * 15) + str(4) + ('-' * 15)
             irc, group = buffer_input.get()
-            print ('-' * 15) + str(5) + ('-' * 15)
 
             try:
                 nickbot = irc.base.nick
                 nick = group('nick')
-                print [nick, nickbot]
 
                 if nickbot.lower() in (nick.lower(), 'nickserv', 'chanserv'):
-                    print ('-' * 15) + str(6) + ('-' * 15)
                     continue
 
                 target = group('target')
@@ -189,14 +182,11 @@ class commands(object):
                     channel = None
 
             except AttributeError:
-                print ('-' * 15) + str(7) + ('-' * 15)
                 continue
             except IndexError:
-                print ('-' * 15) + str(8) + ('-' * 15)
                 continue
 
             for mod, dict in self:
-                print ('-' * 15) + str(9) + ('-' * 15)
                 if_break = False
                 for handler in dict['handlers']:
                     try:

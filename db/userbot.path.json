@@ -17,5 +17,10 @@
 "channels": {
     "func": "_",
     "path": "mods/channels.py",
+    "lc": "es"},
+
+"opers": {
+    "func": "_",
+    "path": "mods/opers.py",
     "lc": "es"}
 }

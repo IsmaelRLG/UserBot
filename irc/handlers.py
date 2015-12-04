@@ -99,6 +99,7 @@ def registration_successful(self, name, group):
     from client import log
     log.info('Registro completado')
     self.attempted = 0
+    self.sleep = 0
 
     from connection import servers
 

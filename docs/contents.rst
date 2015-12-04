@@ -13,6 +13,6 @@ Tabla de contenidos
 
    man
    license
-   sysb *
-   irc *
+   sysb/*
+   irc/*
 

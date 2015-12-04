@@ -13,7 +13,7 @@ _ = locale.turn_tr_str
 lang = core.obtconfig('lang')
 
 
-@commands.addHandler(__name__, 'chan register( (?P<channel>[^ ]+))?', {
+@commands.addHandler('channels', 'chan register( (?P<channel>[^ ]+))?', {
     'sintax': 'chan register <channel>?',
     'example': 'chan register #Foo',
     'desc': _('registra un canal en el bot', lang)},
@@ -37,7 +37,7 @@ def register(irc, result, group, other):
         irc.notice(other['target'], _('canal registrado correctamente', lang))
 
 
-@commands.addHandler(__name__, 'chan flags( (?P<channel>#[^ ]+))? (?P<target>[^'
+@commands.addHandler('channels', 'chan flags( (?P<channel>#[^ ]+))? (?P<target>[^'
     ' ]+) (?P<flags>[^ ]+)',{
     'sintax': 'chan flags <channel>? <target> <flags>',
     'example': 'chan flags #Foo-chan foo-user OP',
@@ -94,7 +94,7 @@ def flags(irc, result, group, other):
         " [%s] - (%s) >> (%s)" % (result('target'), before, after))
 
 
-@commands.addHandler(__name__, 'chan drop( (?P<channel>#[^ ]+))?', {
+@commands.addHandler('channels', 'chan drop( (?P<channel>#[^ ]+))?', {
     'sintax': 'chan flags <channel>?',
     'example': 'chan drop #foo',
     'desc': _('elimina un canal del bot', lang)},
