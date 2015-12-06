@@ -206,3 +206,24 @@ def ip_quad_to_numstr(quad):
     bytes = map(int, quad.split("."))
     packed = struct.pack('BBBB', *bytes)
     return str(struct.unpack('>L', packed)[0])
+
+
+import re
+from irc.request import who
+patt = re.compile('.{1,}!.{1,}@.{1,}')
+
+
+def genls(ls, channel, irc, exc=False):
+    res = []
+    for target in ls:
+        if patt.match(target):
+            for pattern in who(irc, channel)['list']:
+                print (target.replace('*', '.*'))
+                print (pattern)
+                if re.match(target.replace('*', '.*'), pattern[0], 2):
+                    res.append(pattern[0].split('!')[0])
+        elif exc:
+            raise ValueError
+        else:
+            res.append(target)
+    return res
