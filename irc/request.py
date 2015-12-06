@@ -120,7 +120,6 @@ class request(object):
             irc.remove_handler(self.func_reqs, -1, 'local')
 
         self.result = r
-        print r
 
     def __getitem__(self, item):
         try:
@@ -147,7 +146,7 @@ class whois(request):
     @handler('rpl_whoisuser rpl_whoislogged rpl_endofwhois err_nosuchnick')
     def func_reqs(self, name, group):
         name = name.lower()
-        if name == 'rpl_whoisuser' and group('nick') == self.target:
+        if name == 'rpl_whoisuser' and group('nick').lower() == self.target:
             self.result['mask'] = {
                 'nick': group('nick'),
                 'user': group('user'),
@@ -157,16 +156,15 @@ class whois(request):
             return True
 
         elif name == 'rpl_whoislogged':
-            print [0, 0, group('username'), self.target, 0, 0]
-            if group('username') == self.target:
+            if group('username').lower() == self.target:
                 self.result['is logged'] = group('account')
                 return True
 
-        elif name == 'rpl_endofwhois' and group('nick') == self.target:
+        elif name == 'rpl_endofwhois' and group('nick').lower() == self.target:
             self.queue.put(self.result)
             return True
 
-        elif name == 'err_nosuchnick' and group('nick') == self.target:
+        elif name == 'err_nosuchnick' and group('nick').lower() == self.target:
             self.result['error'] = 'No such nick/channel'
             self.queue.put(self.result)
             return True
