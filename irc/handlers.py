@@ -24,9 +24,9 @@ def method_handler(events):
 def handler(name):
     def wawe(func):
         def tururu(self, _name_, group):
-            for nam in name.split():
+            for nam in name.upper().split():
                 #print [nam.upper(), _name_]
-                if nam.upper() == _name_:
+                if nam == _name_:
                     log.debug('handler ejecutado: ' + func.__name__)
                     return func(self, _name_, group)
 
@@ -59,6 +59,7 @@ def error(self, name, group):
     sleep(10)
     self.registered = False
     self.connect()
+    self.joiner = []
     return True
 
 
@@ -70,6 +71,13 @@ def version(self, name, group):
         vrn = (vrn[0] + ' ' + '.'.join(str(num) for num in vrn[1:]))
         self.ctcp_reply(group('nick'), vrn)
         return True
+    raise UnboundLocalError("it is not the required event")
+
+
+@handler('kick')
+def kickme(self, name, group):
+    if group('victim') is self.base.nick:
+        self.joiner.remove(group('channel'))
     raise UnboundLocalError("it is not the required event")
 
 
@@ -133,3 +141,19 @@ def ctcp_ping(self, name, group):
         'PING ' + group('message').strip('\001').strip('PING '))
         return True
     raise UnboundLocalError("it is not the required event")
+
+
+@handler('join part')
+def confirm_join_part(self, name, group):
+    if group('nick').lower() != self.base.nick.lower():
+        raise UnboundLocalError("it is not the required event")
+    elif name.lower() == 'join':
+        self.joiner.append(group('channel').lower())
+        return True
+    elif name.lower() == 'part':
+        self.joiner.remove(group('channel').lower())
+        return True
+
+
+
+
