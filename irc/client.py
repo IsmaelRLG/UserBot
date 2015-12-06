@@ -303,6 +303,11 @@ class ServerConnection:
             self.socket.close()
         except socket.error:
             pass
+        finally:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        self.registered = False
+        self.joiner = []
 
     def err(self, target, msg):
         self.notice(target, '\2\00305error\3:\2 ' + msg)
@@ -369,7 +374,6 @@ class ServerConnection:
     def join(self, channel, key=""):
         """Send a JOIN command."""
         self.send_raw("JOIN %s%s" % (channel, (key and (" " + key))))
-        self.joiner.append(channel.lower())
 
     def kick(self, channel, nick, comment=""):
         """Send a KICK command."""
