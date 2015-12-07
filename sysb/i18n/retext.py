@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 
 import main
 import lc_all
@@ -12,6 +13,7 @@ class turn(main.i18n):
 
         if not self.load(tpk, 'tpk'):
             return
+        main.encode_dict(self.json)
 
     def tr_aval(self, module, lang_code):
         assert not lang_code is 'info'
@@ -20,14 +22,18 @@ class turn(main.i18n):
     def _tr_aval(self):
         return self.json[self.module].keys()
 
-    def turn_tr_str(self, string, lc=None):
+    def turn_tr_str(self, string, lc=None, mod=None, err=True):
+        if mod:
+            module = mod
+        else:
+            module = self.module
         string = string
         if lc == self.lang_o:
             return string
 
         if lc is None:
             lc = self.lang_o
-        elif not self.tr_aval(self.module, lc):
+        elif not self.tr_aval(module, lc):
             try:
                 lc = lc.split('_')[0]  # ¿Un codigo de lenguaje regional?
             except IndexError:
@@ -38,10 +44,14 @@ class turn(main.i18n):
             else:
                 lc = self.lang_o
 
+        s = string.lower()
+
         try:
-            s = string.lower()
-            return self.json[self.module][lc][unicode(hash(s))]
+            return self.json[module][lc][str(hash(s))]
         except KeyError:
-            error = '[%s][%s][%s](%s)' % (self.module, lc, unicode(hash(s)), s)
-            main.logs.error(error)
-            return error
+            if err:
+                error = '[%s][%s][%s](%s)' % (module, lc, str(hash(s)), s)
+                main.logs.error(error)
+                return error
+            else:
+                return string

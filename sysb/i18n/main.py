@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 import os, json, logging
 
 logs = logging.getLogger(__name__)
@@ -76,9 +77,9 @@ def parsename(string):
 def encode_dict(dictionary):
     for key, items in dictionary.items():
         if isinstance(key, unicode):
-            key = key.encode('utf-8')
+            key = key#.encode('utf-8')
         if isinstance(items, unicode):
-            items = items.encode('utf-8')
+            items = items#.encode('utf-8')
         elif isinstance(items, dict):
             encode_dict(items)
         del dictionary[key]

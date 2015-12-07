@@ -115,14 +115,17 @@ class commands(object):
 
         if handler['logged']:
             rpl_whois = whois(irc, nick)
+            print [rpl_whois['is logged']]
+            print [rpl_whois]
             lang = self.lang
+
 
             if not rpl_whois['is logged']:
                 irc.err(nick, _('debe loguearse via nickserv', lang))
                 return
 
-        user = servers[irc.base.name][1][rpl_whois['is logged']]
         if handler['registered']:
+            user = servers[irc.base.name][1][rpl_whois['is logged']]
             if not user:
                 irc.err(nick, _('no se encuentra registrado, registrese', lang))
                 return

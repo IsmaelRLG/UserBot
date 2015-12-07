@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 
 import os
 import i18n
@@ -35,7 +36,11 @@ class make:
                  core.obtconfig('package_translate'),
                  i18n.parsename(__name__))
         _ = locale.turn_tr_str
-        sn = lambda x: raw_input(x + ' ' + _('s/N', lang) + ' ?> ').lower() in ['s', 'y']
+
+        def sn(string):
+            string = unicode(string)
+            raw = raw_input('%s %s ?>' % (string.decode('utf-8'), _('s/N', lang)))
+            return raw.lower() in ['s', 'y']
         i = lambda x: raw_input(x + ' ?> ')
 
         global locale
@@ -88,24 +93,24 @@ class make:
     @handler
     def addserver(self):
         name = i(_('nombre de la red', lang))
-        host = i(_('dirección del servidor', lang))
+        host = i(_('direccion del servidor', lang))
         port = int(i(_('numero de puerto', lang)))
-        ssl = sn(_('¿usar ssl?', lang))
-        if sn(_('¿usar contraseña?', lang)):
+        ssl = sn(_('usar ssl?', lang))
+        if sn(_('usar contrasena?', lang)):
             passwd = (True, i(_('contraseña del servidor', lang)))
         else:
             passwd = (False,)
 
         nick = i(_('nombre para userbot', lang))
         user = i(_('nombre de usuario', lang))
-        if sn(_('¿usar sasl?', lang)):
+        if sn(_('usar sasl?', lang)):
             sasl = (True,
                     (i(_('nombre de la cuenta', lang)),
                     i(_('contraseña', lang))))
         else:
             sasl = (False,)
 
-        connect_to_beginning = sn(_('¿conectar al inicio?', lang))
+        connect_to_beginning = sn(_('conectar al inicio?', lang))
 
         ircbase = core.obtconfig('ircbase')
         if not ircbase:
@@ -208,11 +213,9 @@ class make:
             name = i('')
             for server in ircbase:
                 if name == server.name:
-                    print [server.name, name, server.name == name]
                     level = (level, server.name)
                     break
 
-            print level
             if not isinstance(level, tuple):
                 print _('el servidor no existe', lang)
                 return
@@ -245,7 +248,7 @@ class make:
                 print _('servidores: ', lang) + oper['level'][1]
             except IndexError:
                 pass
-            if sn(_('¿es este el operador a eliminar?', lang)):
+            if sn(_('es este el operador a eliminar?', lang)):
                 opers.remove(oper)
                 core.upconfig('opers', opers)
             print '=' * 80
@@ -255,7 +258,7 @@ class make:
         prefix = core.obtconfig('prefix')
         if prefix:
             print _('el prefijo actual es: ', lang) + prefix
-        r = i('prefijo')[0]
+        r = i(_('prefijo', lang))[0]
         if r.isalpha():
             print _('prefijo invalido el caracter no debe ser alfabetico', lang)
         else:

@@ -4,6 +4,7 @@ from sysb.config import core
 from sysb import commands
 from sysb import i18n
 from irc.connection import servers as base
+from irc.request import whois
 
 locale = i18n.turn(
     'es',
@@ -16,7 +17,7 @@ lang = core.obtconfig('lang')
 @commands.addHandler('users', 'user register', {
     'sintax': 'user register',
     'example': 'user register',
-    'desc': _('registra un usuario en el bot', lang)},
+    'desc': _('registra un usuario en el bot', 'es')},
     logged=True)
 def register(irc, result, group, other):
     lc = other['global_lang']
@@ -33,7 +34,7 @@ def register(irc, result, group, other):
 @commands.addHandler('users', 'user drop', {
     'sintax': 'user drop',
     'example': 'user drop',
-    'desc': _('elimina a un usuario registrado', lang)},
+    'desc': _('elimina a un usuario registrado', 'es')},
     registered=True,
     logged=True)
 def drop(irc, result, group, other):
@@ -47,7 +48,7 @@ def drop(irc, result, group, other):
 @commands.addHandler('users', 'user confirm_drop (?P<code>[^ ]+)', {
     'sintax': 'user confirm_drop <code>',
     'example': 'user confirm_drop 6adf97f83acf6453d4a6a4b1070f3754',
-    'desc': _('confirma la eliminacion de un usuario', lang)},
+    'desc': _('confirma la eliminacion de un usuario', 'es')},
     registered=True,
     logged=True)
 def confirm_drop(irc, result, group, other):
@@ -64,7 +65,7 @@ def confirm_drop(irc, result, group, other):
     'sintax': 'user lang <langcode>',
     'example': 'user lang en',
     'desc': (
-      _('cambia el idioma que se muestra al usuario', lang),
+      _('cambia el idioma que se muestra al usuario', 'es'),
       _('extra: codigo especial "list" muestra los idiomas soportados', lang))},
     registered=True,
     logged=True)
@@ -87,10 +88,9 @@ def set_lang(irc, result, group, other):
 @commands.addHandler('users', 'user info( (?P<account>[^ ]+))?', {
     'sintax': 'user info <account>?',
     'example': 'user info foo',
-    'desc': _('muestra informacion de un usuario en userbot', lang)},
+    'desc': _('muestra informacion de un usuario en userbot', 'es')},
     anyuser=True)
 def info(irc, result, group, other):
-    from irc.request import whois
     rpl = whois(irc, group('nick'))
     account = result('account')
     lc = other['global_lang']

@@ -30,7 +30,7 @@ def make_cmls():
             except IndexError():
                 second = None
             if not first in cmls:
-                cmls[first] = {}
+                cmls[first] = {'module': handlers['module']}
 
             if not '<' in second and\
                not '>' in second and\
@@ -50,11 +50,11 @@ def search(ls):
     if first in cmls:
         if len(ls) == 0:
             if 'sintax' in cmls[first]:
-                return cmls[first]
+                return [cmls[first]]
         elif 'sub' in cmls[first] and ls[len(ls) - 1] in cmls[first]['sub']:
-            return cmls[first]['sub'][ls.pop()]
+            return [cmls[first]['sub'][ls.pop()], cmls[first]['module']]
 
-    return {}
+    return [{}]
 
 
 @commands.addHandler('help', '(help|man|ayuda)( (?P<command>.*))?', {
@@ -80,14 +80,24 @@ def help(irc, result, group, other):
 
     if command:
         res = search(command.lower().split())
+        if len(res) == 1:
+            res = res[0]
+            if len(res) == 0:
+                pass
+            else:
+                mod = res['module']
+        else:
+            mod = res[1]
+            res = res[0]
+
         if res:
             irc.notice(target, _('ayuda para: ', lang) + command)
             if isinstance(res['desc'], tuple) or isinstance(res['desc'], list):
                 irc.notice(target, _('descripcion: ', lang))
                 for line in res['desc']:
-                    irc.notice(target, '        ' + line)
+                    irc.notice(target, '        ' + _(line, lang, mod=mod, err=False))
             else:
-                irc.notice(target, _('descripcion: ', lang) + res['desc'])
+                irc.notice(target, _('descripcion: ', lang) + _(res['desc'], lang, mod=mod, err=False))
 
             irc.notice(target, _('sintaxis: ', lang) + res['sintax'])
             irc.notice(target, _('ejemplo: ', lang) + res['example'])
@@ -123,6 +133,7 @@ def help(irc, result, group, other):
                 for o in textwrap.wrap(', '.join(sub), 400):
                     irc.notice(target, '%s: %s' % (pr, o))
 
+        irc.notice(target, _('?: parametro opcional, |: opciones varias', lang))
         irc.notice(target, _('envie: help <comando> <subcomando>?', lang))
 
 make_cmls()

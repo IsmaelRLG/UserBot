@@ -16,7 +16,7 @@ lang = core.obtconfig('lang')
 @commands.addHandler('opers', 'oper id (?P<name>[^ ]+) (?P<passwd>[^ ]+)', {
     'sintax': 'oper id <name> <password>',
     'example': 'oper id root 1234',
-    'desc': _('bloquea a un usuario en userbot', lang)},
+    'desc': _('identifica a un usuario como operador en userbot', lang)},
     registered=True,
     logged=True)
 def operid(irc, result, group, other):
@@ -58,6 +58,7 @@ def lock_user(irc, result, group, other):
     'example': 'oper unlock fooser',
     'desc': _('desbloquea a un usuario en userbot', lang)},
     oper=('local', 'global'),
+    registered=True,
     logged=True)
 def unlock_user(irc, result, group, other):
     lc = base[irc.base.name][1][other['rpl_whois']]['lang']
@@ -77,7 +78,7 @@ def unlock_user(irc, result, group, other):
     'sintax': 'oper flags <channel> <target> <flags/template>',
     'example': 'oper flags #Foo fooser founder',
     'desc': _('fuerza el cambio de flags en un canal', lang)},
-    oper=('local', 'global'),
+    oper=('noob', 'local', 'global'),
     logged=True,
     registered=True,
     channels=True,
@@ -130,6 +131,7 @@ def flags(irc, result, group, other):
         _('añade un nuevo operador de userbot segun el nivel dado', lang),
         _('niveles disponibles: global local/servidor noob/servidor', lang))},
     oper=('global',),
+    registered=True,
     logged=True)
 def addoper(irc, result, group, other):
     lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
@@ -168,18 +170,20 @@ def addoper(irc, result, group, other):
     'example': 'oper del root',
     'desc': _('elimina un operador de userbot', lang)},
     oper=('global',),
+    registered=True,
     logged=True)
 def deloper(irc, result, group, other):
     lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
+    name = result('name')
     opers = core.obtconfig('opers')
 
     for oper in opers:
-        if oper['user'] == result('name'):
+        if oper['user'] == name:
             opers.remove(oper)
             break
     core.upconfig('opers', opers)
 
-    irc.notice(other['target'], _('operador "%s" eliminado', lang) % result('name'))
+    irc.notice(other['target'], _('operador "%s" eliminado', lang) % name)
 
 
 @commands.addHandler('opers', 'oper load (?P<module>[^ ]+)', {
@@ -187,6 +191,7 @@ def deloper(irc, result, group, other):
     'example': 'oper load users.py',
     'desc': _('carga un modulo a userbot', lang)},
     oper=('global',),
+    registered=True,
     logged=True)
 def load_module(irc, result, group, other):
     lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
@@ -208,11 +213,12 @@ def load_module(irc, result, group, other):
     'example': 'oper reload users.py',
     'desc': _('recarga un modulo de userbot', lang)},
     oper=('global',),
+    registered=True,
     logged=True)
 def reload_module(irc, result, group, other):
     lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
     mod = result('module')
-    res = commands.commands.reload_modules(mod)
+    res = commands.commands.reload_module(mod)
     if res is None:
         irc.err(other['target'], _('el modulo "%s" no existe', lang) % mod)
         return
@@ -229,6 +235,7 @@ def reload_module(irc, result, group, other):
     'example': 'oper download users.py',
     'desc': _('descarga un modulo de userbot', lang)},
     oper=('global',),
+    registered=True,
     logged=True)
 def download_module(irc, result, group, other):
     lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
@@ -237,7 +244,7 @@ def download_module(irc, result, group, other):
     if not res:
         irc.err(other['target'], _('el modulo "%s" no existe', lang) % mod)
     else:
-        irc.noticeo(other['target'], _('modulo "%s" descargado', lang) % mod)
+        irc.notice(other['target'], _('modulo "%s" descargado', lang) % mod)
 
 
 @commands.addHandler('opers', 'oper join (?P<channel>[^ ]+)( (?P<passwd>[^ ]+))?', {
@@ -245,35 +252,27 @@ def download_module(irc, result, group, other):
     'example': 'oper join #Foo',
     'desc': _('ingresa userbot a un canal', lang)},
     oper=('noob', 'local', 'global'),
+    registered=True,
     logged=True)
 def join(irc, result, group, other):
+    lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
     channel = result('channel')
     if not channel.lower() in irc.joiner:
         passwd = result('passwd')
         irc.join(channel, passwd if passwd else '')
-        irc.notice(other['target'], 'ok')
     else:
-        irc.err(other['target'], _('userbot ya esta en el canal (%s)') % channel)
+        irc.err(other['target'], _('userbot ya esta en el canal %s', lang) % channel)
 
 
-@commands.addHandler('opers', 'oper part (?P<channel>[^ ]+)( (?P<reason>.*))?', {
-    'sintax': 'oper part <channel> <reason>',
-    'example': 'oper part #Foo Bye',
-    'desc': _('userbot abandona un canal', lang)},
-    oper=('noob', 'local', 'global'),
-    logged=True)
-def part(irc, result, group, other):
-    pass
-
-
-@commands.addHandler('opers', 'oper mode (?P<target>[^ ]+) (?P<mode>[^ ]+)( (?P<mask>[^ ]+))?', {
-    'sintax': 'oper mode <target> <mode> <mask>',
+@commands.addHandler('opers', 'oper mode (?P<target>[^ ]+) (?P<mode>.*)', {
+    'sintax': 'oper mode <target> <mode>',
     'example': 'oper mode #Foo +b *!*@localhost',
     'desc': _('establece un modo de canal / usuario', lang)},
     oper=('local', 'global'),
+    registered=True,
     logged=True)
 def mode(irc, result, group, other):
-    pass
+    irc.mode(result('target'), result('mode'))
 
 
 @commands.addHandler('opers', 'oper connect (?P<servername>[^ ]+)', {
@@ -281,9 +280,18 @@ def mode(irc, result, group, other):
     'example': 'oper connect localhost',
     'desc': _('conecta a userbot a un servidor especificado', lang)},
     oper=('global',),
+    registered=True,
     logged=True)
 def connect_to(irc, result, group, other):
-    pass
+    lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
+    server = result('servername')
+    target = other['target']
+    if not server in base:
+        irc.err(target, _('el servidor %s no existe', lang) % server)
+    if not base[server][0].is_connected():
+        base[server][0].connect()
+    else:
+        irc.err(target, _('ya se esta conectado a %s', lang) % server)
 
 
 @commands.addHandler('opers', 'oper disconnect (?P<servername>[^ ]+)', {
@@ -291,19 +299,18 @@ def connect_to(irc, result, group, other):
     'example': 'oper disconnect localhost',
     'desc': _('desconecta a userbot de un servidor', lang)},
     oper=('global',),
+    registered=True,
     logged=True)
 def disconnect_to(irc, result, group, other):
-    pass
-
-
-@commands.addHandler('opers', 'oper stats (?P<any>.*)', {
-    'sintax': 'oper stats <any>',
-    'example': 'oper stats users',
-    'desc': _('muestra estadisticas si estan disponibles', lang)},
-    oper=('local', 'global'),
-    logged=True)
-def stats(irc, result, group, other):
-    pass
+    lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
+    server = result('servername')
+    target = other['target']
+    if not server in base:
+        irc.err(target, _('el servidor %s no existe', lang) % server)
+    if base[server][0].is_connected():
+        base[server][0].disconnect()
+    else:
+        irc.err(target, _('ya se esta conectado a %s', lang) % server)
 
 
 @commands.addHandler('opers', 'oper exec (?P<code>.*)', {
@@ -311,6 +318,7 @@ def stats(irc, result, group, other):
     'example': 'oper exec ", ".join(commands.commands.modules.keys())',
     'desc': _('ejecuta codigo Python y responde lo retornado', lang)},
     oper=('global',),
+    registered=True,
     logged=True)
 def execute(irc, result, group, other):
     def __exec__(code):
@@ -324,7 +332,6 @@ def execute(irc, result, group, other):
     res = __exec__(result('code'))
     lc = base[irc.base.name][1][other['rpl_whois']]['lang']
 
-    irc.notice(other['target'], _('*** resultado de ejecucion ***', lc))
     if isinstance(res, type):
         res = str(res)
 
@@ -340,4 +347,3 @@ def execute(irc, result, group, other):
             irc.notice(other['target'], line)
     else:
         irc.notice(other['target'], str(res))
-    irc.notice(other['target'], _('*** fin del resultado***', lc))

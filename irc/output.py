@@ -57,7 +57,10 @@ class output(object):
                     log.info('SEND TO %s: %s' % (out['servername'], out['msg']))
 
                 # Messages per seconds
-                time.sleep(mps)
+                try:
+                    time.sleep(mps)
+                except TypeError:
+                    print [mps]
 
         log.warning('¡Se detuvo la salida de datos!')
 

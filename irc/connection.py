@@ -23,6 +23,8 @@ global_handler(load_feature)
 global_handler(registration_successful)
 global_handler(err_not_registered_nicknameinuse)
 global_handler(ctcp_ping)
+global_handler(confirm_join_part)
+global_handler(kickme)
 
 
 def load_connections():
