@@ -22,5 +22,15 @@
 "opers": {
     "func": "_",
     "path": "mods/opers.py",
+    "lc": "es"},
+
+"manager": {
+    "func": "_",
+    "path": "mods/manager.py",
+    "lc": "es"},
+
+"help": {
+    "func": "_",
+    "path": "mods/help.py",
     "lc": "es"}
 }
