@@ -38,10 +38,10 @@ def register(irc, result, group, other):
     registered=True,
     logged=True)
 def drop(irc, result, group, other):
-    lang = base[irc.base.name][1][other['rpl_whois']]['lang']
+    lc = base[irc.base.name][1][other['rpl_whois']]['lang']
     code = base[irc.base.name][1].gendropcode(other['rpl_whois'])
-    irc.notice(group('nick'), _('codigo de confirmacion: "%s"', lang) % code)
-    irc.notice(group('nick'), _('envie: %s: user confirm_drop <codigo>', lang) %
+    irc.notice(group('nick'), _('codigo de confirmacion: "%s"', lc) % code)
+    irc.notice(group('nick'), _('envie: %s: user confirm_drop <codigo>', lc) %
     irc.base.nick)
 
 
@@ -52,13 +52,13 @@ def drop(irc, result, group, other):
     registered=True,
     logged=True)
 def confirm_drop(irc, result, group, other):
-    lang = base[irc.base.name][1][other['rpl_whois']]['lang']
+    lc = base[irc.base.name][1][other['rpl_whois']]['lang']
     num_resl = base[irc.base.name][1].drop(result('code'))
     if num_resl in (0, None):
-        irc.err(group('nick'), _('codigo invalido', lang))
+        irc.err(group('nick'), _('codigo invalido', lc))
     else:
         base[irc.base.name][2].remove_user(other['rpl_whois']['is logged'])
-        irc.notice(group('nick'), _('eliminado correctamente', lang))
+        irc.notice(group('nick'), _('eliminado correctamente', lc))
 
 
 @commands.addHandler('users', 'user lang (?P<langcode>[^ ]+)', {
@@ -70,11 +70,11 @@ def confirm_drop(irc, result, group, other):
     registered=True,
     logged=True)
 def set_lang(irc, result, group, other):
-    lang = base[irc.base.name][1][other['rpl_whois']]['lang']
+    lc = base[irc.base.name][1][other['rpl_whois']]['lang']
     lc = result('langcode').lower()
 
     if lc == 'list':
-        irc.notice(group('nick'), _('codigos de lenguaje disponibles:', lang))
+        irc.notice(group('nick'), _('codigos de lenguaje disponibles:', lc))
         for lc in locale._tr_aval():
             irc.notice(group('nick'), '[ %s ] - %s' % (lc, i18n.LC_ALL[lc]))
     elif lc in locale._tr_aval():
@@ -82,7 +82,7 @@ def set_lang(irc, result, group, other):
         base[irc.base.name][1].save
         irc.notice(group('nick'), _('idioma actualizado', lc))
     else:
-        irc.err(group('nick'), _('codigo de lenguaje invalido', lang))
+        irc.err(group('nick'), _('codigo de lenguaje invalido', lc))
 
 
 @commands.addHandler('users', 'user info( (?P<account>[^ ]+))?', {

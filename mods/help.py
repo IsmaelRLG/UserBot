@@ -64,19 +64,22 @@ def search(ls):
     anyuser=True)
 def help(irc, result, group, other):
     rpl = whois(irc, group('nick'))
-    lang = other['global_lang']
+    lc = other['global_lang']
     user = None
     command = result('command')
     target = other['target']
+    print rpl
     if rpl['is logged'] and base[irc.base.name][1][rpl['is logged']]:
         user = base[irc.base.name][1][rpl['is logged']]
+        print '-------------lollolo------------'
 
     if user:
-        lang = user['lang']
+        lc = user['lang']
+        print '------------9-------------'
 
     vrn = core.obtconfig('VERSION')
     vrn = (vrn[0] + ' ' + '.'.join(str(num) for num in vrn[1:]))
-    irc.notice(target, vrn + ' - ' + _('codigo fuente: ', lang) + 'https://goo.gl/vVSG8i')
+    irc.notice(target, vrn + ' - ' + _('codigo fuente: ', lc) + 'https://goo.gl/vVSG8i')
 
     if command:
         res = search(command.lower().split())
@@ -91,18 +94,18 @@ def help(irc, result, group, other):
             res = res[0]
 
         if res:
-            irc.notice(target, _('ayuda para: ', lang) + command)
+            irc.notice(target, _('ayuda para: ', lc) + command)
             if isinstance(res['desc'], tuple) or isinstance(res['desc'], list):
-                irc.notice(target, _('descripcion: ', lang))
+                irc.notice(target, _('descripcion: ', lc))
                 for line in res['desc']:
-                    irc.notice(target, '        ' + _(line, lang, mod=mod, err=False))
+                    irc.notice(target, '        ' + _(line, lc, mod=mod, err=False))
             else:
-                irc.notice(target, _('descripcion: ', lang) + _(res['desc'], lang, mod=mod, err=False))
+                irc.notice(target, _('descripcion: ', lc) + _(res['desc'], lc, mod=mod, err=False))
 
-            irc.notice(target, _('sintaxis: ', lang) + res['sintax'])
-            irc.notice(target, _('ejemplo: ', lang) + res['example'])
+            irc.notice(target, _('sintaxis: ', lc) + res['sintax'])
+            irc.notice(target, _('ejemplo: ', lc) + res['example'])
         else:
-            irc.notice(target, _('el comando no existe', lang))
+            irc.notice(target, _('el comando no existe', lc))
     else:
         post = {}
         first = []
@@ -117,7 +120,7 @@ def help(irc, result, group, other):
             else:
                 first.append(dic[0])
 
-        irc.notice(target, _('comandos disponibles: ', lang))
+        irc.notice(target, _('comandos disponibles: ', lc))
         msg = textwrap.wrap(', '.join(first), 400)
         for o in msg:
             irc.notice(target, o)
@@ -133,7 +136,7 @@ def help(irc, result, group, other):
                 for o in textwrap.wrap(', '.join(sub), 400):
                     irc.notice(target, '%s: %s' % (pr, o))
 
-        irc.notice(target, _('?: parametro opcional, |: opciones varias', lang))
-        irc.notice(target, _('envie: help <comando> <subcomando>?', lang))
+        irc.notice(target, _('?: parametro opcional, |: opciones varias', lc))
+        irc.notice(target, _('envie: help <comando> <subcomando>?', lc))
 
 make_cmls()

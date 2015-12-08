@@ -85,7 +85,7 @@ def unlock_user(irc, result, group, other):
     chn_registered=True,
     chan_reqs='channel')
 def flags(irc, result, group, other):
-    lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
+    lc = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
     if result('target', 'flags') == ('*', '*'):
 
         num = 1
@@ -96,7 +96,7 @@ def flags(irc, result, group, other):
         return
 
     if not base[irc.base.name][1][result('target')]:
-        irc.err(other['target'], _('usuario no registrado en el bot', lang))
+        irc.err(other['target'], _('usuario no registrado en el bot', lc))
         return
 
     if result('flags') == '*':
@@ -120,7 +120,7 @@ def flags(irc, result, group, other):
         after = base[irc.base.name][2].flags(
         'get', other['channel'], result('target').lower())
 
-        irc.notice(other['target'], _('flags actualizado:', lang) +
+        irc.notice(other['target'], _('flags actualizado:', lc) +
         " [%s] - (%s) >> (%s)" % (result('target'), before, after))
 
 
@@ -134,7 +134,7 @@ def flags(irc, result, group, other):
     registered=True,
     logged=True)
 def addoper(irc, result, group, other):
-    lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
+    lc = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
     opers = core.obtconfig('opers')
     level, name, password = result('level', 'name', 'sha_passwd')
 
@@ -146,15 +146,15 @@ def addoper(irc, result, group, other):
         server = None
 
     if server and not server in base:
-        irc.err(other['target'], _('servidor "%s" invalido', lang) % server)
+        irc.err(other['target'], _('servidor "%s" invalido', lc) % server)
         return
 
     if not level in ('noob', 'local', 'global'):
-        irc.err(other['target'], _('nivel "%s" invalido', lang) % level)
+        irc.err(other['target'], _('nivel "%s" invalido', lc) % level)
         return
 
     if not len(password) == 64 or not password.isalnum():
-        irc.err(other['target'], _('la contraseña debe estar en sha256', lang))
+        irc.err(other['target'], _('la contraseña debe estar en sha256', lc))
         return
 
     opers.append({
@@ -162,7 +162,7 @@ def addoper(irc, result, group, other):
         'user': name,
         'level': level if not server else (level, server)})
     core.upconfig('opers', opers)
-    irc.notice(other['target'], _('operador %s "%s" agregado', lang) % (level, name))
+    irc.notice(other['target'], _('operador %s "%s" agregado', lc) % (level, name))
 
 
 @commands.addHandler('opers', 'oper del (?P<name>[^ ]+)', {
@@ -173,7 +173,7 @@ def addoper(irc, result, group, other):
     registered=True,
     logged=True)
 def deloper(irc, result, group, other):
-    lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
+    lc = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
     name = result('name')
     opers = core.obtconfig('opers')
 
@@ -183,7 +183,7 @@ def deloper(irc, result, group, other):
             break
     core.upconfig('opers', opers)
 
-    irc.notice(other['target'], _('operador "%s" eliminado', lang) % name)
+    irc.notice(other['target'], _('operador "%s" eliminado', lc) % name)
 
 
 @commands.addHandler('opers', 'oper load (?P<module>[^ ]+)', {
@@ -194,16 +194,16 @@ def deloper(irc, result, group, other):
     registered=True,
     logged=True)
 def load_module(irc, result, group, other):
-    lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
+    lc = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
     mod = result('module')
     res = commands.commands.load_modules(mod)
     if res is None:
-        irc.err(other['target'], _('el modulo "%s" no existe', lang) % mod)
+        irc.err(other['target'], _('el modulo "%s" no existe', lc) % mod)
         return
     elif res is True:
-        irc.notice(other['target'], _('modulo "%s" cargado', lang) % mod)
+        irc.notice(other['target'], _('modulo "%s" cargado', lc) % mod)
     elif isinstance(res, list):
-        irc.err(other['target'], _('el modulo "%s" contiene errores', lang) % mod)
+        irc.err(other['target'], _('el modulo "%s" contiene errores', lc) % mod)
         for line in res:
             irc.err(other['target'], line)
 
@@ -216,16 +216,16 @@ def load_module(irc, result, group, other):
     registered=True,
     logged=True)
 def reload_module(irc, result, group, other):
-    lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
+    lc = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
     mod = result('module')
     res = commands.commands.reload_module(mod)
     if res is None:
-        irc.err(other['target'], _('el modulo "%s" no existe', lang) % mod)
+        irc.err(other['target'], _('el modulo "%s" no existe', lc) % mod)
         return
     elif res is True:
-        irc.notice(other['target'], _('modulo "%s" recargado', lang) % mod)
+        irc.notice(other['target'], _('modulo "%s" recargado', lc) % mod)
     elif isinstance(res, list):
-        irc.err(other['target'], _('el modulo "%s" contiene errores', lang) % mod)
+        irc.err(other['target'], _('el modulo "%s" contiene errores', lc) % mod)
         for line in res:
             irc.err(other['target'], line)
 
@@ -238,13 +238,13 @@ def reload_module(irc, result, group, other):
     registered=True,
     logged=True)
 def download_module(irc, result, group, other):
-    lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
+    lc = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
     mod = result('module')
     res = commands.commands.download_module(mod)
     if not res:
-        irc.err(other['target'], _('el modulo "%s" no existe', lang) % mod)
+        irc.err(other['target'], _('el modulo "%s" no existe', lc) % mod)
     else:
-        irc.notice(other['target'], _('modulo "%s" descargado', lang) % mod)
+        irc.notice(other['target'], _('modulo "%s" descargado', lc) % mod)
 
 
 @commands.addHandler('opers', 'oper join (?P<channel>[^ ]+)( (?P<passwd>[^ ]+))?', {
@@ -255,13 +255,13 @@ def download_module(irc, result, group, other):
     registered=True,
     logged=True)
 def join(irc, result, group, other):
-    lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
+    lc = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
     channel = result('channel')
     if not channel.lower() in irc.joiner:
         passwd = result('passwd')
         irc.join(channel, passwd if passwd else '')
     else:
-        irc.err(other['target'], _('userbot ya esta en el canal %s', lang) % channel)
+        irc.err(other['target'], _('userbot ya esta en el canal %s', lc) % channel)
 
 
 @commands.addHandler('opers', 'oper mode (?P<target>[^ ]+) (?P<mode>.*)', {
@@ -283,15 +283,15 @@ def mode(irc, result, group, other):
     registered=True,
     logged=True)
 def connect_to(irc, result, group, other):
-    lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
+    lc = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
     server = result('servername')
     target = other['target']
     if not server in base:
-        irc.err(target, _('el servidor %s no existe', lang) % server)
+        irc.err(target, _('el servidor %s no existe', lc) % server)
     if not base[server][0].is_connected():
         base[server][0].connect()
     else:
-        irc.err(target, _('ya se esta conectado a %s', lang) % server)
+        irc.err(target, _('ya se esta conectado a %s', lc) % server)
 
 
 @commands.addHandler('opers', 'oper disconnect (?P<servername>[^ ]+)', {
@@ -302,15 +302,15 @@ def connect_to(irc, result, group, other):
     registered=True,
     logged=True)
 def disconnect_to(irc, result, group, other):
-    lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
+    lc = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
     server = result('servername')
     target = other['target']
     if not server in base:
-        irc.err(target, _('el servidor %s no existe', lang) % server)
+        irc.err(target, _('el servidor %s no existe', lc) % server)
     if base[server][0].is_connected():
         base[server][0].disconnect()
     else:
-        irc.err(target, _('ya se esta conectado a %s', lang) % server)
+        irc.err(target, _('ya se esta conectado a %s', lc) % server)
 
 
 @commands.addHandler('opers', 'oper exec (?P<code>.*)', {

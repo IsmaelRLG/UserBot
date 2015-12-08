@@ -23,18 +23,18 @@ lang = core.obtconfig('lang')
     chan_reqs='channel')
 def register(irc, result, group, other):
     account = other['rpl_whois']['is logged'].lower()
-    lang = base[irc.base.name][1][account]['lang']
+    lc = base[irc.base.name][1][account]['lang']
 
     if not other['channel'].lower() in irc.joiner:
         irc.err(other['target'],
-        _('no puede registrar el canal, informe a un operador', lang))
+        _('no puede registrar el canal, informe a un operador', lc))
         return
 
     resu = base[irc.base.name][2].register(other['channel'], account)
     if resu == 5:
-        irc.err(other['target'], _('canal ya registrado', lang))
+        irc.err(other['target'], _('canal ya registrado', lc))
     elif resu == 7:
-        irc.notice(other['target'], _('canal registrado correctamente', lang))
+        irc.notice(other['target'], _('canal registrado correctamente', lc))
 
 
 @commands.addHandler('channels', 'chan flags( (?P<channel>#[^ ]+))? (?P<target>[^'
@@ -49,7 +49,7 @@ def register(irc, result, group, other):
     privs='s',
     chan_reqs='channel')
 def flags(irc, result, group, other):
-    lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
+    lc = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
     if result('target', 'flags') == ('*', '*'):
 
         num = 1
@@ -60,7 +60,7 @@ def flags(irc, result, group, other):
         return
 
     if not base[irc.base.name][1][result('target')]:
-        irc.err(other['target'], _('usuario no registrado en el bot', lang))
+        irc.err(other['target'], _('usuario no registrado en el bot', lc))
         return
 
     if result('flags') == '*':
@@ -75,12 +75,12 @@ def flags(irc, result, group, other):
 
         if result('flags')[0] in '+-':
             if 'F' in result('flags'):
-                irc.err(other['target'], _('permiso denegado', lang))
+                irc.err(other['target'], _('permiso denegado', lc))
                 return
             kwargs = {'flag': result('flags')}
         else:
             if 'founder'.lower() in result('flags'):
-                irc.err(other['target'], _('permiso denegado', lang))
+                irc.err(other['target'], _('permiso denegado', lc))
                 return
             kwargs = {'template': result('flags')}
 
@@ -90,7 +90,7 @@ def flags(irc, result, group, other):
         after = base[irc.base.name][2].flags(
         'get', other['channel'], result('target').lower())
 
-        irc.notice(other['target'], _('flags actualizado:', lang) +
+        irc.notice(other['target'], _('flags actualizado:', lc) +
         " [%s] - (%s) >> (%s)" % (result('target'), before, after))
 
 
@@ -105,9 +105,7 @@ def flags(irc, result, group, other):
     privs='F',
     chan_reqs='channel')
 def drop(irc, result, group, other):
-    lang = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
+    lc = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
     del base[irc.base.name][2][other['channel']]
-    irc.notice(other['target'], _('canal eliminado', lang))
-    irc.part(other['channel'], _('saliendo...', lang))
-
-
+    irc.notice(other['target'], _('canal eliminado', lc))
+    irc.part(other['channel'], _('saliendo...', lc))

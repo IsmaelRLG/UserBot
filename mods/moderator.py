@@ -34,7 +34,7 @@ def loadpattern():
         PATTERN.append(re.compile(pattern, 2))
 
 
-def loagignored():
+def loadignored():
     for host in urllib.urlopen(URLIGNO).read().splitlines():
         IGNORED.append(host)
 
@@ -61,7 +61,7 @@ def badwords(irc, nick, host, message):
 def noupper(irc, nick, host, message):
     upper = 0
     lower = 0
-    porcent = float(80)
+    porcent = float(75)
     for letter in message:
         if letter.isupper():
             upper += 1
@@ -131,4 +131,6 @@ def pipe(self, event, group):
             raise UnboundLocalError("it is not the required event")
 
 
-base[SERVER][0].add_handler(pipe, 9, 'local')
+loadignored()
+loadpattern()
+#base[SERVER][0].add_handler(pipe, 9, 'local')

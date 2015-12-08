@@ -13,7 +13,7 @@ _ = locale.turn_tr_str
 lang = core.obtconfig('lang')
 
 
-@commands.addHandler('manager', 'op( (?P<channel>#[^ ]+))?( (?P<target>.*))?',
+@commands.addHandler('manager', 'op$( (?P<channel>#[^ ]+))?( (?P<target>.*))?',
     {'sintax': 'op <channel>? <target>',
     'example': 'op #Foo fuser fuser2',
     'desc': _('asigna estatus de operador a un usuario', lang)},

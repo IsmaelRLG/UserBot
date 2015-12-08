@@ -115,10 +115,7 @@ class commands(object):
 
         if handler['logged']:
             rpl_whois = whois(irc, nick)
-            print [rpl_whois['is logged']]
-            print [rpl_whois]
             lang = self.lang
-
 
             if not rpl_whois['is logged']:
                 irc.err(nick, _('debe loguearse via nickserv', lang))

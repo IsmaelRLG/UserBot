@@ -9,6 +9,7 @@ class config(database.ownbot):
 
     def __init__(self):
         # Creamos la linda tabla que almacenara toda la configuracion <3
+        time.sleep(2)
         self.create('core', 'id text key not null, pick text not null', True)
 
         if self.obtconfig('VERSION') is None:
