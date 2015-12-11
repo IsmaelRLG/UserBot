@@ -160,7 +160,7 @@ def _(string):
 
 # Operation messages
 
-JOIN = _('JOIN') + '(?P<channel>[^ ]+)'
+JOIN = _('JOIN') + ':?(?P<channel>[^ ]+)'
 PART = _('PART') + '(?P<channel>[^ ]+)( :(?P<message>.*))?'
 MODE = _('MODE') + '(?P<target>[^ ]+) (?P<mode>[^ ]+) (?P<victims>.*)'
 KICK = _('KICK') + '(?P<channel>[^ ]+) (?P<victim>[^ ]+) :(?P<message>.*)'

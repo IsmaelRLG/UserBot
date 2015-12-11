@@ -120,7 +120,7 @@ class ownbot(object):
             table,
             ' where ' + where if where else ''), tmp, commit=False)
 
-        return self.cur.fetchall()
+        return self.cur.fetchone()
 
     def update(self, table, value, where='', tmp=False, commit=True):
         """

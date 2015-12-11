@@ -434,7 +434,6 @@ class ServerConnection:
     def part(self, channels, message=""):
         """Send a PART command."""
         self.send_raw("PART %s%s" % (channels, (message and (" " + message))))
-        self.joiner.remove(channels.lower())
 
     def pass_(self, password):
         """Send a PASS command."""

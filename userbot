@@ -12,14 +12,25 @@ def main():
         sys.argv.append('')
 
     if sys.argv[1] in ('--start', '--restart'):
-        import coloredlogs
+        if not '--no-daemon' in sys.argv:
+            import logging
+            args = {'format': '%(asctime)s:%(levelname)s:%(name)s: %(message)s'}
+            func = logging.basicConfig
+        else:
+            import coloredlogs
+            args = {}
+            func = coloredlogs.install
+
         if '--debug=1' in sys.argv:
-            coloredlogs.install(10)
+            args['level'] = 10
+            func(**args)
 
         elif '--debug=2' in sys.argv:
-            coloredlogs.install(20)
+            args['level'] = 20
+            func(**args)
         else:
-            coloredlogs.install(40)
+            args['level'] = 40
+            func(**args)
 
         if not '--no-daemon' in sys.argv:
             startstop(stdout=os.getcwd()+'/userbot-error.log',

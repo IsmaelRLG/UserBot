@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import md5
 import main
+import crypt
 
 
 class gettext(main.i18n):
@@ -82,11 +84,15 @@ class gettext(main.i18n):
                                     break
 
     def add(self, mod, lang, text):
+        print [mod, lang, text]
+        if isinstance(text, unicode):
+            text = text.encode('utf-8')
         if not mod in self.get:
             self.get[mod] = {}
 
         if not lang in self.get[mod]:
             self.get[mod][lang] = {}
 
-        self.get[mod][lang][str(hash(text.lower()))] = text
+        txt = md5.new(text.lower()).hexdigest()
+        self.get[mod][lang][crypt.crypt(txt, txt)] = text
         main.logs.debug('text: ' + text)

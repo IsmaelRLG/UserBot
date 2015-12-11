@@ -3,6 +3,9 @@
 import cPickle
 import database
 import time
+import logg
+
+log = logg.getLogger(__name__)
 
 
 class config(database.ownbot):
@@ -29,10 +32,13 @@ class config(database.ownbot):
         t = 1
         while t < 2:
             try:
-                return cPickle.loads(self.select('core', 'pick', 'id="%s"'
-                % name)[0][0].encode('utf-8'))
-            except IndexError:
-                return
+                select = self.select('core', 'pick', 'id="%s"' % name)[0]
+                result = cPickle.loads(select.encode('utf-8'))
+                log.debug(name + ': ' + str(result))
+                return result
+            except (IndexError, TypeError):
+                log.debug(name + ': no exists')
+                return None
             except self.ProgrammingError:
                 time.sleep(t)
                 t += 1

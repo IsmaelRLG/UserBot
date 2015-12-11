@@ -37,6 +37,8 @@ class output(object):
 
         plaintext = core.obtconfig('plaintext')
         mps = core.obtconfig('mps')
+        if not mps:
+            mps = 0.4
         while self._stop is False:
             out = buffer_output.get()
             if out == 0:  # Saliendo! D:
@@ -57,10 +59,7 @@ class output(object):
                     log.info('SEND TO %s: %s' % (out['servername'], out['msg']))
 
                 # Messages per seconds
-                try:
-                    time.sleep(mps)
-                except TypeError:
-                    print [mps]
+                time.sleep(mps)
 
         log.warning('¡Se detuvo la salida de datos!')
 

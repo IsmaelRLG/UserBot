@@ -76,14 +76,14 @@ def version(self, name, group):
 
 @handler('kick')
 def kickme(self, name, group):
-    if group('victim') is self.base.nick:
-        self.joiner.remove(group('channel'))
+    if group('victim').lower() == self.base.nick.lower():
+        self.joiner.remove(group('channel').lower())
     raise UnboundLocalError("it is not the required event")
 
 
 @handler('kick')
 def kick_rejoin(self, name, group):
-    if group('victim') is self.base.nick:
+    if group('victim').lower() == self.base.nick.lower():
         self.join(group('channel'))
         return True
 

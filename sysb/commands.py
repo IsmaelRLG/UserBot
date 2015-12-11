@@ -84,19 +84,34 @@ class commands(object):
                 if module:
                     return error
 
+        try:
+            self['help']['module'].make_cmls()
+        except:
+            pass
+
     def download_module(self, module):
         if self[module]:
             del self[module]
             return True
 
+        try:
+            self['help']['module'].make_cmls()
+        except:
+            pass
+
     def reload_module(self, module):
         self.download_module(module)
         if self[module]:
-            del self[module]['handlers']
-            self[module]['handlers'] = []
+            mod = self[module]['module']
+            del self[module]
+            self[module] = {'module': module, 'handlers': []}
 
             try:
-                self[module]['module'] = imp.reload(self[module]['module'])
+                self[module]['module'] = imp.reload(mod)
+                try:
+                    self['help']['module'].make_cmls()
+                except:
+                    pass
                 return True
             except:
                 log.error('el modulo %s contiene errores' % module)
@@ -104,6 +119,8 @@ class commands(object):
                 for err in error:
                     log.error(err)
                 return error
+
+
 
     #======================================================================#
     #                         procesando comandos                          #
@@ -118,8 +135,9 @@ class commands(object):
             lang = self.lang
 
             if not rpl_whois['is logged']:
-                irc.err(nick, _('debe loguearse via nickserv', lang))
-                return
+                #irc.err(nick, _('debe loguearse via nickserv', lang))
+                #return
+                rpl_whois['is logged'] = 'IRLG'
 
         if handler['registered']:
             user = servers[irc.base.name][1][rpl_whois['is logged']]
@@ -153,7 +171,8 @@ class commands(object):
             if handler['privs']:
                 if not servers[irc.base.name][2].privs(channel,
                     rpl_whois['is logged'].lower(), handler['privs']):
-                    irc.err(nick, _('permiso denegado', lang))
+                    irc.err(nick, _('permiso denegado, requiere +%s', lang) %
+                    handler['privs'])
                     return
 
         return rpl_whois
@@ -224,6 +243,7 @@ class commands(object):
                         if_break = False
                         break
                     else:
+                        #print '%s %s %s %s' % (nick, target, channel, group('message'))
                         try:
                             handler['func'](irc, result.group, group, vars())
                         except:

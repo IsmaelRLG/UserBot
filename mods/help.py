@@ -68,14 +68,11 @@ def help(irc, result, group, other):
     user = None
     command = result('command')
     target = other['target']
-    print rpl
     if rpl['is logged'] and base[irc.base.name][1][rpl['is logged']]:
         user = base[irc.base.name][1][rpl['is logged']]
-        print '-------------lollolo------------'
 
     if user:
         lc = user['lang']
-        print '------------9-------------'
 
     vrn = core.obtconfig('VERSION')
     vrn = (vrn[0] + ' ' + '.'.join(str(num) for num in vrn[1:]))

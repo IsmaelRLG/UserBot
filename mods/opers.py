@@ -37,17 +37,23 @@ def operid(irc, result, group, other):
     oper=('local', 'global'),
     logged=True)
 def lock_user(irc, result, group, other):
-    lc = base[irc.base.name][1][other['rpl_whois']]['lang']
+    iam = base[irc.base.name][1][other['rpl_whois']]
+    lc = iam['lang']
     account = result('account')
+    reason = result('reason')
     target = other['target']
-    if not base[irc.base.name][1][account]:
+    user = base[irc.base.name][1][account]
+    if not user:
         irc.err(target, _('usuario "%s" inexistente', lc) % account)
-    elif not base[irc.base.name][1][account]['lock'][0]:
-        base[irc.base.name][1][account]['lock'][0] = True
-        base[irc.base.name][1][account]['lock'].append(result('reason'))
+    elif not user['lock'][0]:
+        if user['status'] in ('global',):
+            irc.err(target, _('permiso denegado', lc))
+
+        user['lock'][0] = True
+        user['lock'].append(reason)
         base[irc.base.name][1].save
         irc.notice(target, _('usuario "%s" bloqueado razon: %s', lc) %
-        (account, result('reason')))
+        (account, reason))
     else:
         irc.err(target, _('usuario "%s" bloqueado con anterioridad', lc) %
         account)
@@ -273,6 +279,25 @@ def join(irc, result, group, other):
     logged=True)
 def mode(irc, result, group, other):
     irc.mode(result('target'), result('mode'))
+
+
+@commands.addHandler('opers', 'oper say (?P<target>[^ ]+) (?P<message>.*)', {
+    'sintax': 'oper say <target> <message>',
+    'example': 'oper say #Foo Hi!',
+    'desc': _('envia un mensaje equis a traves de userbot', lang)},
+    oper=('local', 'global'),
+    registered=True,
+    logged=True)
+def say(irc, result, group, other):
+    denied = 'chanserv nickserv memoserv'
+    user = base[irc.base.name][1][other['rpl_whois']]
+    lc = user['lang']
+    message = result('message')
+    target = other['target']
+    if user['status'] != 'global' and target.lower() in denied:
+        irc.err(target, _('permiso denegado', lc))
+        return
+    irc.privmsg(target, message)
 
 
 @commands.addHandler('opers', 'oper connect (?P<servername>[^ ]+)', {
