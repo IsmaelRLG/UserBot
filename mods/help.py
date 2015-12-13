@@ -10,10 +10,10 @@ import textwrap
 
 locale = i18n.turn(
     'es',
-    core.obtconfig('package_translate'),
+    core.obtconfig('package_translate', cache=True),
     'help')
 _ = locale.turn_tr_str
-lang = core.obtconfig('lang')
+lang = core.obtconfig('lang', cache=True)
 cmls = {}
 
 
@@ -74,7 +74,7 @@ def help(irc, result, group, other):
     if user:
         lc = user['lang']
 
-    vrn = core.obtconfig('VERSION')
+    vrn = core.obtconfig('VERSION', cache=True)
     vrn = (vrn[0] + ' ' + '.'.join(str(num) for num in vrn[1:]))
     irc.notice(target, vrn + ' - ' + _('codigo fuente: ', lc) + 'https://goo.gl/vVSG8i')
 

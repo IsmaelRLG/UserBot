@@ -7,10 +7,10 @@ from irc.connection import servers as base
 
 locale = i18n.turn(
     'es',
-    core.obtconfig('package_translate'),
+    core.obtconfig('package_translate', cache=True),
     'opers')
 _ = locale.turn_tr_str
-lang = core.obtconfig('lang')
+lang = core.obtconfig('lang', cache=True)
 
 
 @commands.addHandler('opers', 'oper id (?P<name>[^ ]+) (?P<passwd>[^ ]+)', {

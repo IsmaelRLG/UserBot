@@ -82,7 +82,7 @@ class ownbot(object):
                           de tipo booleano, valor por default: True"""
 
         # Esto puede ser peligroso xD
-        self.__logg.debug("SQLite Shell ?> %s, args=(tmp=%s, commit=%s)" %
+        self.__logg.debug("?> %s, args=(tmp=%s, commit=%s)" %
         (string.replace('\n', '\\n'), tmp, commit))
 
         if not tmp:

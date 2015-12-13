@@ -33,7 +33,7 @@ class make:
             global lang
 
         locale = i18n.turn('es',
-                 core.obtconfig('package_translate'),
+                 core.obtconfig('package_translate', cache=True),
                  i18n.parsename(__name__))
         _ = locale.turn_tr_str
 
@@ -52,7 +52,7 @@ class make:
             self.lang()
             self.clear()
 
-        vrn = core.obtconfig('VERSION')
+        vrn = core.obtconfig('VERSION', cache=True)
         vrn = (vrn[0] + ' ' + '.'.join(str(num) for num in vrn[1:]))
 
         print _('Bienvenido al sistema de configuracion de ', lang) + vrn

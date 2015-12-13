@@ -284,7 +284,7 @@ class ServerConnection:
             self.send_raw('AUTHENTICATE ' + self.base.sasl[1])
             self.cap('END')
 
-        self.user(config.obtconfig('VERSION')[0], self.base.user)
+        self.user(config.obtconfig('VERSION', cache=True)[0], self.base.user)
 
         self.nick(self.base.nick)
 
@@ -326,11 +326,7 @@ class ServerConnection:
     @Thread.thread(init=True)
     def input(self):
         "read and process input from self.socket"
-        try:
-            plaintext = config.obtconfig('plaintext')
-        except config.ProgrammingError:
-            time.sleep(2)
-            plaintext = config.obtconfig('plaintext')
+        plaintext = config.obtconfig('plaintext', cache=True)
 
         log.debug('La entrada de datos de %s se ha iniciado.' % self.base.name)
         while self.connected is True:

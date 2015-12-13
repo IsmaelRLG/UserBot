@@ -57,13 +57,13 @@ class i18n(object):
                 else:
                     logs.warning('¿hay dos lenguajes iguales en un modulo? O_O')
 
-                for numkeys, text in subitems.items():
-                    try:
-                        int(numkeys)
-                    except ValueError:
-                        logs.error('[%s][%s][%s]: clave invalida' %
-                        (mod_name, lang, numkeys))
-                        return False
+                #for numkeys, text in subitems.items():
+                    #try:
+                        #int(numkeys)
+                    #except ValueError:
+                        #logs.error('[%s][%s][%s]: clave invalida' %
+                        #(mod_name, lang, numkeys))
+                        #return False
 
         logs.info('paquete de traducciones verificado')
         encode_dict(dict)

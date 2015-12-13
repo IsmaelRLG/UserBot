@@ -35,10 +35,8 @@ class output(object):
         Procesando el queue de salida.
         """
 
-        plaintext = core.obtconfig('plaintext')
-        mps = core.obtconfig('mps')
-        if not mps:
-            mps = 0.4
+        plaintext = core.obtconfig('plaintext', cache=True)
+        mps = core.obtconfig('mps', cache=True)
         while self._stop is False:
             out = buffer_output.get()
             if out == 0:  # Saliendo! D:

@@ -37,10 +37,7 @@ class database(object):
     def __init__(self, ircobject, name, extra=None):
         self.irc = ircobject
         self.name = name
-        self.lang = core.obtconfig('lang')
-        if not self.lang:
-            time.sleep(2)
-            self.lang = core.obtconfig('lang')
+        self.lang = core.obtconfig('lang', cache=True)
         self.__core__ = core.obtconfig(name + '_' + self.irc.base.name)
         if not self.__core__:
             self.__core__ = {}

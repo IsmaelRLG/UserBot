@@ -12,10 +12,11 @@ class config(database.ownbot):
 
     def __init__(self):
         # Creamos la linda tabla que almacenara toda la configuracion <3
+        self.cache = {}
         time.sleep(2)
         self.create('core', 'id text key not null, pick text not null', True)
 
-        if self.obtconfig('VERSION') is None:
+        if self.obtconfig('VERSION', cache=True) is None:
             self.addconfig('VERSION', ('UserBot', 0, 7, 54))
 
     def addconfig(self, name, _object):
@@ -28,20 +29,53 @@ class config(database.ownbot):
     def delconfig(self, name):
         self.delete('core', name)
 
-    def obtconfig(self, name):
-        t = 1
-        while t < 2:
+    def obtconfig(self, name, cache=False, up=False):
+        relapse = [0]
+
+        def get(name, relapse=relapse):
+            if relapse[0] >= 4:
+                return
+            else:
+                relapse[0] += 1
+
+            #res = None
             try:
-                select = self.select('core', 'pick', 'id="%s"' % name)[0]
-                result = cPickle.loads(select.encode('utf-8'))
-                log.debug(name + ': ' + str(result))
-                return result
-            except (IndexError, TypeError):
-                log.debug(name + ': no exists')
-                return None
-            except self.ProgrammingError:
-                time.sleep(t)
-                t += 1
+                res = self.select('core', 'pick', 'id="%s"' % name)[0]
+                res = cPickle.loads(res.encode('utf-8'))
+            except (IndexError, TypeError, self.ProgrammingError):
+                log.warning(name + ': no exists')
+                time.sleep(1)
+                return get(name)
+            else:
+                log.debug(name + ': ' + str([res]))
+                return res
+
+        def __cache__(action, name, set=None):
+            if action == 'get':
+                try:
+                    return self.cache[name]
+                except KeyError:
+                    return
+
+            if action == 'set':
+                self.cache[name] = set
+
+        if cache:
+            result = __cache__('get', name)
+            if result:
+                n = 'get ' + name
+                if up:
+                    result = get(name)
+                    __cache__('set', name, result)
+            else:
+                n = 'set ' + name
+                result = get(name)
+                __cache__('set', name, result)
+
+            log.debug('cache %s result: %s' % (n, str(result)))
+            return result
+        else:
+            return get(name)
 
     def upconfig(self, name, _object):
         self.update('core',

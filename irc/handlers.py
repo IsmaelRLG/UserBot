@@ -67,7 +67,7 @@ def error(self, name, group):
 def version(self, name, group):
     if group('message').upper().endswith("\001VERSION\001") and \
         group('message').upper().startswith("\001VERSION\001"):
-        vrn = config.obtconfig('VERSION')
+        vrn = config.obtconfig('VERSION', cache=True)
         vrn = (vrn[0] + ' ' + '.'.join(str(num) for num in vrn[1:]))
         self.ctcp_reply(group('nick'), vrn)
         return True

@@ -7,10 +7,10 @@ from irc.connection import servers as base
 
 locale = i18n.turn(
     'es',
-    core.obtconfig('package_translate'),
+    core.obtconfig('package_translate', cache=True),
     'channels')
 _ = locale.turn_tr_str
-lang = core.obtconfig('lang')
+lang = core.obtconfig('lang', cache=True)
 
 
 @commands.addHandler('channels', 'chan register( (?P<channel>[^ ]+))?', {
@@ -95,7 +95,7 @@ def flags(irc, result, group, other):
 
 
 @commands.addHandler('channels', 'chan drop( (?P<channel>#[^ ]+))?', {
-    'sintax': 'chan flags <channel>?',
+    'sintax': 'chan drop <channel>?',
     'example': 'chan drop #foo',
     'desc': _('elimina un canal del bot', lang)},
     registered=True,

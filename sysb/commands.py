@@ -10,7 +10,7 @@ from irc.connection import servers
 log = logg.getLogger(__name__)
 locale = i18n.turn(
     'es',
-    core.obtconfig('package_translate'),
+    core.obtconfig('package_translate', cache=True),
     'commands')
 _ = locale.turn_tr_str
 
@@ -20,7 +20,7 @@ class commands(object):
     def __init__(self):
         self.modules = {}
         self.endless_process()
-        self.lang = core.obtconfig('lang')
+        self.lang = core.obtconfig('lang', cache=True)
 
     def __getitem__(self, key):
         try:
@@ -100,14 +100,14 @@ class commands(object):
             pass
 
     def reload_module(self, module):
-        self.download_module(module)
         if self[module]:
             mod = self[module]['module']
             del self[module]
             self[module] = {'module': module, 'handlers': []}
 
             try:
-                self[module]['module'] = imp.reload(mod)
+                print str(mod)
+                self[module]['module'] = reload(mod)
                 try:
                     self['help']['module'].make_cmls()
                 except:
@@ -119,8 +119,6 @@ class commands(object):
                 for err in error:
                     log.error(err)
                 return error
-
-
 
     #======================================================================#
     #                         procesando comandos                          #
@@ -180,9 +178,9 @@ class commands(object):
     @Thread.thread(no_class=True)
     def endless_process(self):
         import time
-        time.sleep(2)
-        global_prefix = core.obtconfig('prefix')
-        time.sleep(2)
+        time.sleep(1)
+        global_prefix = core.obtconfig('prefix', cache=True)
+        time.sleep(1)
         global_lang = self.lang
         while True:
             irc, group = buffer_input.get()

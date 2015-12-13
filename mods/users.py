@@ -8,10 +8,10 @@ from irc.request import whois
 
 locale = i18n.turn(
     'es',
-    core.obtconfig('package_translate'),
+    core.obtconfig('package_translate', cache=True),
     'users')
 _ = locale.turn_tr_str
-lang = core.obtconfig('lang')
+lang = core.obtconfig('lang', cache=True)
 
 
 @commands.addHandler('users', 'user register', {
