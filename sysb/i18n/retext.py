@@ -19,7 +19,10 @@ class turn(main.i18n):
 
     def tr_aval(self, module, lang_code):
         assert not lang_code is 'info'
-        return lang_code in self.json[module].keys()
+        try:
+            return lang_code in self.json[module].keys()
+        except KeyError:
+            return False
 
     def _tr_aval(self):
         return self.json[self.module].keys()

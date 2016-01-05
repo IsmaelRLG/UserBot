@@ -5,6 +5,9 @@ from sysb import commands
 from sysb import i18n
 from irc.connection import servers as base
 
+import time
+
+__uptime__ = tuple(time.localtime())
 locale = i18n.turn(
     'es',
     core.obtconfig('package_translate', cache=True),
@@ -293,7 +296,7 @@ def say(irc, result, group, other):
     user = base[irc.base.name][1][other['rpl_whois']]
     lc = user['lang']
     message = result('message')
-    target = other['target']
+    target = result('target')
     if user['status'] != 'global' and target.lower() in denied:
         irc.err(target, _('permiso denegado', lc))
         return
@@ -372,3 +375,79 @@ def execute(irc, result, group, other):
             irc.notice(other['target'], line)
     else:
         irc.notice(other['target'], str(res))
+
+
+@commands.addHandler('opers', 'oper uptime', {
+    'sintax': 'oper uptime',
+    'example': 'oper uptime',
+    'desc': _('muestra el tiempo de actividad', lang)},
+    oper=('local', 'global'),
+    registered=True,
+    logged=True)
+def uptime(irc, result, group, other):
+    def res_posc(pos1, pos2):
+        if pos1 > pos2:
+            return pos1 - pos2
+        else:
+            return pos2 - pos1
+
+    def servers(serv=None, ircobj=None, ch=None, usr=None, opers=None):
+        ls = []
+        for servername, l, in base.items():
+            ircobject, user, channel = l
+            if serv:
+                ls.append(0)
+            elif ircobj and ircobject.connected:
+                ls.append(0)
+            elif ch:
+                for i in range(len(channel)):
+                    ls.append(0)
+            elif usr:
+                for i in range(len(user)):
+                    ls.append(0)
+            elif opers:
+                for uuid, __user__ in user:
+                    if __user__['status'] in 'global local noob':
+                        ls.append(0)
+
+        return len(ls)
+
+    # Time zone
+    now = tuple(time.localtime())
+    year  = res_posc(now[0], __uptime__[0])
+    month = res_posc(now[1], __uptime__[1])
+    day   = res_posc(now[2], __uptime__[2])
+    hours = res_posc(now[3], __uptime__[3])
+    mins  = res_posc(now[4], __uptime__[4])
+    secs  = res_posc(now[5], __uptime__[5])
+
+    print secs
+    # Thread zone
+    from sysb import Thread
+    import threading
+    thd_tot = Thread.total[0]
+    thd_run = len(threading.enumerate())
+
+    # IRC Zone
+    lc = base[irc.base.name][1][other['rpl_whois']]['lang']
+    message = _('andando hace: %s, threads: lanzandos %s, andando %s', lc)
+    message += _(', servidores %s, conectados %s', lc)
+    message += _(', canales %s, usuarios %s, operadores %s', lc)
+
+    message = message % (
+        '%s%s%s%s%s%s' % (
+            _('{} año(s)', lc).format(year) if year else '',
+            _('{} mes(es), ', lc).format(month) if month else '',
+            _('{} dia(s), ', lc).format(day) if day else '',
+            _('{} hora(s), ', lc).format(hours) if hours else '',
+            _('{} minuto(s), ', lc).format(mins) if mins else '',
+            _('{} segundo(s)', lc).format(secs) if secs else ''),
+        thd_tot,
+        thd_run,
+        servers(serv=True),
+        servers(ircobj=True),
+        servers(ch=True),
+        servers(usr=True),
+        servers(opers=True)
+    )
+    irc.notice(other['target'], message)

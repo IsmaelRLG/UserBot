@@ -108,7 +108,7 @@ class ServerConnection:
         if self.local_handlers is None:
             self.local_handlers = {}
 
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket = socket.socket()
 
     def _connect(self):
         if self.attempted > self.attempted_limit:
@@ -146,14 +146,16 @@ class ServerConnection:
         """
         Procesa una linea, y agrega al Queue lo procesado.
         """
-
+        print 'procesando'
         # Eliminando cosas raras...
         for round in range(2):
             if line.endswith('\n') or line.endswith('\r'):
                 line = line.rstrip('\n').rstrip('\r')
+                print 'se elimino el salto de linea'
 
         for name, regex in ircregex.ALL.items():
             if name is 'ALL':
+                print 'es ALL!!'
                 continue
 
             try:
@@ -182,7 +184,7 @@ class ServerConnection:
 
         # Formateando....
         S = eval('self.{level}_handlers'.format(level=level))
-
+        print ('procesando handlers %s' % level)
         try:
             prt = S.keys()
             prt.sort()
@@ -191,6 +193,7 @@ class ServerConnection:
             return
 
         for priority in prt:
+            print priority
             for handler in S[priority]:
                 try:
                     return handler(self, name, method_group)
@@ -323,7 +326,7 @@ class ServerConnection:
         """Send an INFO command."""
         self.send_raw(" ".join(["INFO", server]).strip())
 
-    @Thread.thread(init=True)
+    @Thread.thread(no_class=True)
     def input(self):
         "read and process input from self.socket"
         plaintext = config.obtconfig('plaintext', cache=True)
@@ -331,16 +334,18 @@ class ServerConnection:
         log.debug('La entrada de datos de %s se ha iniciado.' % self.base.name)
         while self.connected is True:
             try:
-                for line in self.socket.recv(4028).splitlines():
+                print 'entrada de datos!! Esperando...'
+                for line in self.socket.recvfrom(4028)[0].splitlines():
+                    # Registrando cada linea
+                    if plaintext:
+                        log.info('RECV FROM %s: %s' % (self.base.name, line))
+
                     try:
                         self._process_line(line)
                     except AttributeError:
                         for err in traceback.format_exc().splitlines():
                             log.error(err)
 
-                    # Registrando cada linea
-                    if plaintext:
-                        log.info('RECV FROM %s: %s' % (self.base.name, line))
             except socket.error:
                 # The server hung up.
                 self.connected = False

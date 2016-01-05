@@ -38,13 +38,16 @@ class output(object):
         plaintext = core.obtconfig('plaintext', cache=True)
         mps = core.obtconfig('mps', cache=True)
         while self._stop is False:
+            print 'preparandose para recibir mas informacion'
             out = buffer_output.get()
+            print 'informacion recibida procesando'
             if out == 0:  # Saliendo! D:
                 break
 
             # According to the RFC http://tools.ietf.org/html/rfc2812#page-6,
             # clients should not transmit more than 512 bytes.
             if len(out['msg']) > 507:
+                print 'es un menaje muy largo'
                 out.update({'msg': textwrap.wrap(out['msg'], 507)[0] + '...'})
 
             try:
@@ -57,6 +60,7 @@ class output(object):
                     log.info('SEND TO %s: %s' % (out['servername'], out['msg']))
 
                 # Messages per seconds
+                print 'durmiendo'
                 time.sleep(mps)
 
         log.warning('¡Se detuvo la salida de datos!')

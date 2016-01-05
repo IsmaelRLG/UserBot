@@ -17,9 +17,9 @@ funciona bajo la versión de Python 2.6 y 2.7, este pequeño bot modular
 soporta multiples conexiones a servidores, y multiples modulos los cuales
 se pueden añadir manualmente en un directorio, UserBot es un proyecto
 opensource (codigo abierto), es gratuito y lo seguira seindo, esta licenciado
-bajo la MIT license, eso significa que puedes hacer lo que quieras con
-este programa, siempre y cuando se reconozca al autor original, acá se te
-indicará brevemente como configurar y lanzar a UserBot! 
+bajo la licencia de massachusets, eso significa que puedes hacer lo que
+quieras con este programa, siempre y cuando se reconozca al autor original,
+acá se te indicará brevemente como configurar y lanzar a UserBot! 
 
 OPCIONES
 ========

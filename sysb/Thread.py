@@ -6,12 +6,13 @@ import logging as logg
 
 log = logg.getLogger(__name__)
 thd = {}
+total = [0]
 
 
 def thread(init=None, n=None, no_class=None):
     def func_obt(func):
         def wrapper(*args, **kwargs):
-
+            total[0] += 1
             name = str(func).split().pop().replace('>', '') if not n else n
             mess = 'iniciado'
 

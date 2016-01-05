@@ -213,17 +213,18 @@ from irc.request import who
 patt = re.compile('.{1,}!.{1,}@.{1,}')
 
 
-def genls(ls, channel, irc, exc=False):
-    res = []
-    for target in ls:
-        if patt.match(target):
-            for pattern in who(irc, channel)['list']:
-                print (target.replace('*', '.*'))
-                print (pattern)
-                if re.match(target.replace('*', '.*'), pattern[0], 2):
-                    res.append(pattern[0].split('!')[0])
-        elif exc:
-            raise ValueError
-        else:
-            res.append(target)
-    return res
+def mask2patt(string):
+    return string.reaplce('*', '.*')
+
+
+def val_mask(mask):
+    return bool(re.match('.{1,}!.{1,}@.{1,}|\$[a-z]:.*', mask))
+
+
+def make_nick_ls(irc, channel, mask):
+    __list__ = []
+    maskpatt = mask2patt(mask)
+    for user in who(irc, channel)['list']:
+        if re.match(maskpatt, '{}!{}@{}'.format(user[:3]), 2):
+            __list__.append(user[0])
+    return __list__

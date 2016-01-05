@@ -1,17 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from sysb.daemon import *
+import os
 
 #PATH = '/etc/userbot/'
 PATH = os.getcwd()
+os.chdir(PATH)
+
+from sysb.daemon import *
 
 
 def main():
     if len(sys.argv) == 1:
         sys.argv.append('')
 
-    if sys.argv[1] in ('--start', '--restart'):
+    if sys.argv[1] in ('--stop', '--restart'):
+        startstop(stdout=os.getcwd()+'/userbot.log', pidfile='/tmp/userbot.pid')
+        if sys.argv[1] == '--restart':
+            sys.argv[1] = '--start'
+
+    if sys.argv[1] == '--start':
         if not '--no-daemon' in sys.argv:
             import logging
             args = {'format': '%(asctime)s:%(levelname)s:%(name)s: %(message)s'}
@@ -49,9 +57,7 @@ def main():
 
         from irc.connection import load_connections as load
         load()
-
-    elif sys.argv[1] == '--stop':
-        startstop(stdout=os.getcwd()+'/userbot.log', pidfile='/tmp/userbot.pid')
+        commands.endless_process()
 
     elif sys.argv[1] == '--help':
         #os.chdir(PATH)
@@ -64,7 +70,7 @@ def main():
         make()
 
     else:
-        print "Forma de uso: pyfi --(start|stop|restart|make-config|help)"
+        print "Forma de uso: userbot --(start|stop|restart|make-config|help)"
         print "Para mas información: userbot --help"
 
 if __name__ == '__main__':

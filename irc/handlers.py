@@ -90,7 +90,7 @@ def kick_rejoin(self, name, group):
 
 @handler('nick')
 def real_nick(self, name, group):
-    if group('nick') is self.base.nick:
+    if group('nick').lower() == self.base.nick.lower():
         self.base.nick = group('new_nick')
         return True
 

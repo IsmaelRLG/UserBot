@@ -107,15 +107,14 @@ def startstop(stdout='/dev/null', stderr=None, stdin='/dev/null',
                     mess = "UserBot stoped PID: %s\n"
                     print mess % pid
                     os.remove(pidfile)
-                    if 'stop' == action:
+                    if '--stop' == action:
                         sys.exit(0)
-                    action = 'start'
-                    pid = None
+                    return
                 else:
                     print str(err)
                     sys.exit(1)
 
-        if '--start' == action:
+        elif action == '--start':
             if pid:
                 mess = "UserBot start aborded since pid file '%s' exists.\n"
                 sys.stderr.write(mess % pidfile)

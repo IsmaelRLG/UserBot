@@ -1,0 +1,11 @@
+{
+"server": "freenode",
+"channel": "#wikimedia-ve",
+"events": ["PRVIMSG"],
+"wikimedia": {
+        "url": "https://wikimedia.org.ve/",
+        "user": "userbot",
+        "pass": "password"
+    },
+"time format": "H:M:"
+}

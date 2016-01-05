@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 
-from irc.util import genls
+from irc import center
+from irc import util
 from sysb.config import core
 from sysb import commands
 from sysb import i18n
+from sysb import schedule
+from irc.connection import servers as base
 
 locale = i18n.turn(
     'es',
     core.obtconfig('package_translate', cache=True),
-    'channels')
+    'manager')
 _ = locale.turn_tr_str
 lang = core.obtconfig('lang', cache=True)
 
@@ -29,7 +32,7 @@ def op(irc, result, group, other):
         target = [group('nick')]
     else:
         target = target.split()
-    gen = genls(target, other['channel'], irc)
+    gen = util.make_nick_ls(irc, other['channel'], target)
     irc.mode(other['channel'], '+%s %s' % ((len(gen) * 'o'), ' '.join(gen)))
 
 
@@ -105,12 +108,13 @@ def devoice(irc, result, group, other):
     privs='r',
     chan_reqs='channel')
 def join(irc, result, group, other):
+    lc = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
     channel = result('channel')
     if not channel.lower() in irc.joiner:
         passwd = result('passwd')
         irc.join(channel, passwd if passwd else '')
     else:
-        irc.err(other['target'], _('userbot ya esta en el canal %s') % channel)
+        irc.err(other['target'], _('userbot ya esta en el canal %s', lc) % channel)
 
 
 @commands.addHandler('manager', 'part (?P<channel>[^ ]+)( (?P<reason>.*))?',
@@ -129,7 +133,8 @@ def part(irc, result, group, other):
         reason = result('reason')
         irc.part(channel, reason if reason else '')
     else:
-        irc.err(other['target'], _('userbot no esta en el canal %s') % channel)
+        lc = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
+        irc.err(other['target'], _('userbot no esta en el canal %s', lc) % channel)
 
 
 @commands.addHandler('manager', '(kick|k)( (?P<channel>#[^ ]+))? (?P<target>[^ '
@@ -147,3 +152,41 @@ def kick(irc, result, group, other):
     reason = reason if reason else other['nick']
     for target in genls(result('target').split(), other['channel'], irc):
         irc.kick(other['channel'], target, reason)
+
+
+@commands.addHandler('manager', 'ban|b( (?P<channel>#[^ ]+))? (?P<target>[^ ]+)'
+    '( (?P<time>(?P<num>\d)(?P<alpha>[YMDHMS]{1})))?( (?P<message>.*))?',
+    {'sintax': 'ban <channel>? <target> <time>?',
+    'example': 'ban #Foo fuser 1d',
+    'desc': _('banea a un usuario', lang)},
+    registered=True,
+    logged=True,
+    channels=True,
+    chn_registered=True,
+    privs='b',
+    chan_reqs='channel')
+def ban(irc, result, group, other):
+    lc = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
+    time = result('time')
+    target = result('target')
+    message = result('message')
+    channel = other['channel']
+    if not util.val_mask(target):
+        irc.err(other['target'], _('mascara invalida', lc))
+        return
+
+    irc.mode(channel, '+b ' + target)
+
+    if not message:
+        message = 'banned: %s' % target
+
+    for nick in util.make_nick_ls(irc, channel, target):
+        irc.kick(channel, nick, message)
+
+    if time:
+        try:
+            time = center.mode.conv_parse_txt(time)
+            center.mode.add(irc.base.name, channel, '-b ' + target)
+        except ValueError:
+            irc.err(other['target'], _('tiempo invalido', lc))
+            return

@@ -1,0 +1,115 @@
+{
+"server": "localhost",
+"channel": "#canaima-social",
+"count_limit": 250,
+"keyval": "C4n4m4",
+
+"ignore": [],
+"opers": [],
+
+"welcome": "Bienvenido al canal de la comunidad de Canaima! Recuerda siempre cumplir las reglas del canal \u00bfNecesitas ayuda? \u00bfTu canaimita o la de alguien m\u00e1s tiene problemas? \u00bfNo tienes canaimita? \u00bfPero si tienes algo con Sistema Canaima? O quiz\u00e1s alguien te molesta, te dice groser\u00edas D: o \u00bfesta pidiendo algo que no se debe pedir? solicita ayuda del personal de Canaima! env\u00eda aqu\u00ed mismo 'canaima-ayuda' seguido de tu problema, ejemplo de un mensaje: ",
+"example": "canaima-ayuda quiero instalar google chrome y mi hermano me molesta",
+
+"not": "\u00bfEsa raz\u00f3n es un poco corta no? No informare a los operadores con algo as\u00ed, has otro intento pero esta vez un poco mas detallado \u00bfok?",
+"okay": "En breve se estar\u00e1 comunicando con usted alguien del personal que este activo, \u00a1ten paciencia! las personas que ayudan ac\u00e1 son voluntarios es decir, \u00a1No les pagan por esto! has varios intentos hasta que alg\u00fan miembro del personal se comunique con usted y le ayude! Unos tips, el personal esta m\u00e1s activo en la tarde por aproximadamente desde las 12 PM hasta las 6 PM en horario nocturno, despu\u00e9s de las 9 PM es poco probable que alguien te ayude :(",
+
+"warn": "\u00a1 {nick} ! \u000305\u0002ADVERTENCIA\u0003\u0002 N-{relapse_num} - ",
+"warning": "\u00a1Hola {nick}! Soy un robot y esto es un mensaje autom\u00e1tico, \u00bfparece que te estas portando mal? No contin\u00faes por favor :( o ser\u00e1s expulsado por un d\u00eda completo! Eso significa que no podr\u00e1s volver al chat hasta que se cumplan 24 horas! Esta es tu ultima advertencia. Y algo m\u00e1s, \u00a1NO RESPONDAS! Como dije: Soy un robot automatizado y no comprender\u00e9 nada de lo que digas",
+
+"nodata": {
+    "warning": "No debes compartir o solicitar datos personales",
+    "relapse_limit": 2,
+    "patterns": [
+        ["(.+)?(\\+58)?0?(4(12|14|16|24|26)|212)\\d{6,7}(.+)?", 1],
+        ["(.+)?facebook(.+)?", 1],
+        ["(.+)?twitter(.+)?", 0],
+        ["(.+)?instagram(.+)?", 0],
+        ["(.+)?bbm(.+)?", 0],
+        ["(.+)?@gmail(.+)?", 1],
+        ["(.+)?@hotmail(.+)?", 1],
+        ["(.+)?@yahoo(.+)?", 1],
+        ["(.+)?skype(.+)?", 0],
+        ["(.+)?whatsapp(.+)?", 1],
+        ["(.+)?telegram(.+)?", 0],
+        ["(.+)?telefono(.+)?", 1],
+        ["(.+)?celular(.+)?", 1],
+        ["(.+)?cantv(.+)?", 0],
+        ["(.+)?digitel(.+)?", 0],
+        ["(.+)?movistar(.+)?", 0],
+        ["(.+)?novi[oa](.+)?", 0],
+        ["(.+)? fb$ (.+)?", 0],
+        ["(.+)?tlf(n)?(.+)?", 0],
+        ["(.+)? face (.+)?", 0],
+        ["(.+)?d(e)? (donde|dnd) ere[sz](.+)?", 0],
+        ["(.+)?(donde|dnd) [vb]i[vb]e[sz](.+)?", 0],
+        ["(.+)?(cm|como|cmo|com) t(h)?e (ll|y)ma(.+)?", 0]
+    ]
+},
+
+"noupper": {
+    "warning": "Evita el uso de las may\u00fasculas",
+    "relapse_limit": 2,
+    "len_mini": 4,
+    "porcent": 75.0
+},
+
+"noflood": {
+    "relapse_limit": 5,
+    "limit_t": 20,
+    "limit_l": 900,
+    "limit_m": 5,
+    "limit_r": 4
+},
+
+"norepeat": {
+    "warning": "Uso excesivo de una misma letra",
+    "relapse_limit": 2,
+    "limit": 8
+},
+
+"badwords": {
+    "warning": "Lenguaje vulgar, obsceno u ofensivo",
+    "relapse_limit": 1,
+    "patterns": [
+        "(.{1,})?(c{1,}o{1,}\u00f1{1,}o{1,})",
+        "(.{1,})?(p{1,}u{1,}t{1,}i{1,}t{1,})",
+        "(.{1,})?(p{1,}u{1,}t{1,}(h{1,})?[oa]{1,})",
+        "(.{1,})?(m{1,}a{1,}l{1,}d{1,}i{1,}t{1,})",
+        "(.{1,})?(m{1,}i{1,}e{1,}r{1,}d{1,})",
+        "(.{1,})?(j{1,}o{1,}d{1,}e{1,})",
+        "(.{1,})?(g{1,}u{1,}e{1,}[vb]{1,}o{1,})",
+        "(.{1,})?([ck]{1,}u{1,}[ck]{1,}a{1,})",
+        "(.{1,})?([vb]{1,}a{1,}[gj]{1,}i{1,}n{1,}a{1,})",
+        "(.{1,})?(p{1,}e{1,}n{1,}e{1,})",
+        "(.{1,})?(m{1,}e{1,}t{1,}e{1,}m{1,}e{1,}l{1,})",
+        "(.{1,})?([cs]{1,}h{1,}u{1,}p{1,}a{1,}[lm]{1,})",
+        "(.{1,})?(m{1,}a{1,}m{1,}a{1,}[rl]{1,})",
+        "(.{1,})?([ck]{1,}o{1,}[jg]{1,}e{1,}[mr]{1,})",
+        "(.{1,})?([sz]{1,}e{1,}m{1,}e{1,}n{1,})",
+        "(.{1,})?(t{1,}(h{1,})?t{1,}(h{1,})?a{1,})",
+        "(.{1,})?([vb]{1,}a{1,}i{1,}n{1,}a{1,})",
+        "(.{1,})?(p{1,}e{1,}n{1,}e{1,}t{1,}r{1,}a{1,}[mr]{1,})",
+        "(.{1,})?(p{1,}o{1,}r{1,}n{1,}o{1,})",
+        "(.{1,})?(a{1,}n{1,}a{1,}l{1,}$)",
+        "(.{1,})?(t{1,}o{1,}n{1,}t{1,}[ao]{1,})",
+        "(.{1,})?(m{1,}a{1,}r{1,}i{1,}[cq]{1,})",
+        "(.{1,})?(g{1,}a{1,}f{1,}[ao]{1,})",
+        "(.{1,})?(e{1,}s{1,}t{1,}u{1,}p{1,}i{1,}d{1,})",
+        "(.{1,})?(i{1,}d{1,}i{1,}o{1,}t{1,})",
+        "(.{1,})?(mmg{1,}[bv]{1,})",
+        "(.{1,})?(h{1,}d{1,}p{1,})",
+        "(.{1,})?(p{1,}e{1,}n{1,}d{1,}e{1,}j{1,})",
+        "(.{1,})?(c{1,}u{1,}l{1,}[oe])",
+        "(.{1,})?([vb]{1,}e{1,}r{1,}g{1,}[ai]{1,})",
+        "(.{1,})?(t{1,}o{1,}t{1,}o{1,}n{1,}a{1,})",
+        "(.{1,})?(e{1,}r{1,}e{1,}[ckpt]{1,}[scz]{1,}i{1,}[o\u00f3]{1,})",
+        "(.{1,})?(p{1,}a{1,}r{1,}a{1,}m{1,}e{1,}l{1,}o{1,})",
+        "(.{1,})?(c{1,}o{1,}i{1,}t{1,}o{1,})",
+        "(.{1,})?(s{1,}e{1,}x{1,}o{1,})",
+        "(.{1,})?(m{1,}a{1,}s{1,}t{1,}u{1,}r{1,}b{1,}a{1,})",
+        "(.{1,})?(p{1,}a{1,}j{1,}(u{1,}o{1,}|e{1,}r{1,}))",
+        "(.{1,})?([hg]{1,}e{1,}n{1,}t{1,}a{1,}i{1,})",
+        "(.{1,})?(f{1,}o{1,}l{1,}a{1,}r{1,})"
+    ]
+}
+}

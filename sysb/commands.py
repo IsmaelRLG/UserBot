@@ -19,7 +19,7 @@ class commands(object):
 
     def __init__(self):
         self.modules = {}
-        self.endless_process()
+        #self.endless_process()
         self.lang = core.obtconfig('lang', cache=True)
 
     def __getitem__(self, key):
@@ -102,8 +102,8 @@ class commands(object):
     def reload_module(self, module):
         if self[module]:
             mod = self[module]['module']
-            del self[module]
-            self[module] = {'module': module, 'handlers': []}
+            del self.modules[module]
+            self.modules[module] = {'module': module, 'handlers': []}
 
             try:
                 print str(mod)
