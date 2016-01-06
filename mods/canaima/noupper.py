@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from canaima import conf
+from canaima import to_kick
 from irc.center import mode
-from irc.request import who
 
 RELAPSE = {}
 RELAPSE_LIMIT = conf['noupper']['relapse_limit']
@@ -33,7 +33,7 @@ def func(irc, nick, host, message):
                 RELAPSE[host] += 1
 
             if RELAPSE[host] < RELAPSE_LIMIT:
-                msg = conf['warn']
+                msg = conf['warn'] + conf['noupper']['warning']
                 msg = msg.format(nick=nick, relapse_num=RELAPSE[host])
                 irc.notice(conf['channel'], msg)
 
@@ -42,11 +42,9 @@ def func(irc, nick, host, message):
                 return True
             else:
                 irc.mode(conf['channel'], '+b *!*@' + host)
+                to_kick.append((host.lower(), conf['noupper']['warning']))
+                irc.who(conf['channel'])
 
-                for user in who(irc, conf['channel'])['list']:
-                    if user[2] == host:
-                        irc.kick(conf['channel'], user[0], conf['nodata']['warning'])
-
-                mode.add(irc.base.name, conf['channel'], '-b *!*@' + host)
+                mode(irc.base.name, conf['channel'], '-b *!*@' + host, 86400)
                 del RELAPSE[host]
                 return True

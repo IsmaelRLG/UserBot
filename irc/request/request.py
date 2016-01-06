@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import sys
+
 import time
 
 
@@ -97,17 +97,12 @@ class request(object):
         self.result = {}
         self.execute()
         self.lock = True
-        print 'bloqueado'
         while self.lock:
             if len(self.result) > 0:
                 self.lock = False
             time.sleep(0.1)
-            sys.stdout.write('.')
-            sys.stdout.flush()
 
         else:
-            sys.stdout.write('OK')
-            sys.stdout.flush()
             if not self.cache:
                 cache.add(irc.base.name, self.__class__.__name__, self.target, self.result)
                 irc.remove_handler(self.func_reqs, 0, 'local')

@@ -2,12 +2,11 @@
 "server": "localhost",
 "channel": "#canaima-social",
 "count_limit": 250,
-"keyval": "C4n4m4",
 
 "ignore": [],
 "opers": [],
 
-"welcome": "Bienvenido al canal de la comunidad de Canaima! Recuerda siempre cumplir las reglas del canal \u00bfNecesitas ayuda? \u00bfTu canaimita o la de alguien m\u00e1s tiene problemas? \u00bfNo tienes canaimita? \u00bfPero si tienes algo con Sistema Canaima? O quiz\u00e1s alguien te molesta, te dice groser\u00edas D: o \u00bfesta pidiendo algo que no se debe pedir? solicita ayuda del personal de Canaima! env\u00eda aqu\u00ed mismo 'canaima-ayuda' seguido de tu problema, ejemplo de un mensaje: ",
+"welcome": "Bienvenido al canal de la comunidad de Canaima! Recuerda siempre cumplir las reglas del canal \u00bfNecesitas ayuda? \u00bfTu canaimita o la de alguien m\u00e1s tiene problemas? \u00bfNo tienes canaimita? \u00bfPero si tienes algo con Sistema Canaima? O quiz\u00e1s alguien te molesta, te dice groser\u00edas D: o \u00bfesta pidiendo algo que no se debe pedir? solicita ayuda del personal de Canaima! env\u00eda aqu\u00ed mismo \"canaima-ayuda\" seguido de tu problema, ejemplo de un mensaje: ",
 "example": "canaima-ayuda quiero instalar google chrome y mi hermano me molesta",
 
 "not": "\u00bfEsa raz\u00f3n es un poco corta no? No informare a los operadores con algo as\u00ed, has otro intento pero esta vez un poco mas detallado \u00bfok?",
@@ -69,7 +68,7 @@
 
 "badwords": {
     "warning": "Lenguaje vulgar, obsceno u ofensivo",
-    "relapse_limit": 1,
+    "relapse_limit": 2,
     "patterns": [
         "(.{1,})?(c{1,}o{1,}\u00f1{1,}o{1,})",
         "(.{1,})?(p{1,}u{1,}t{1,}i{1,}t{1,})",

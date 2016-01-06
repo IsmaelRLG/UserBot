@@ -2,8 +2,8 @@
 
 import re
 from canaima import conf
+from canaima import to_kick
 from irc.center import mode
-from irc.request import who
 
 PATTERNS = []
 RELAPSE = {}
@@ -34,11 +34,15 @@ def func(irc, nick, host, message):
                 else:
                     irc.mode(conf['channel'], '+b *!*@' + host)
 
-                    for user in who(irc, conf['channel'])['list']:
-                        if user[2] == host:
-                            irc.kick(conf['channel'], user[0], conf['badwords']['warning'])
+                    for tuple in to_kick:
+                        _host, msg = tuple
+                        if host == _host:
+                            to_kick.remove(tuple)
 
-                    mode.add(irc.base.name, conf['channel'], '-b *!*@' + host)
+                    to_kick.append((host.lower(), conf['badwords']['warning']))
+                    irc.who(conf['channel'])
+
+                    mode(irc.base.name, conf['channel'], '-b *!*@' + host, 86400)
                     del RELAPSE[host]
                     return True
 

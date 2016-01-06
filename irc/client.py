@@ -146,16 +146,13 @@ class ServerConnection:
         """
         Procesa una linea, y agrega al Queue lo procesado.
         """
-        print 'procesando'
         # Eliminando cosas raras...
         for round in range(2):
             if line.endswith('\n') or line.endswith('\r'):
                 line = line.rstrip('\n').rstrip('\r')
-                print 'se elimino el salto de linea'
 
         for name, regex in ircregex.ALL.items():
             if name is 'ALL':
-                print 'es ALL!!'
                 continue
 
             try:
@@ -184,7 +181,6 @@ class ServerConnection:
 
         # Formateando....
         S = eval('self.{level}_handlers'.format(level=level))
-        print ('procesando handlers %s' % level)
         try:
             prt = S.keys()
             prt.sort()
@@ -193,7 +189,6 @@ class ServerConnection:
             return
 
         for priority in prt:
-            print priority
             for handler in S[priority]:
                 try:
                     return handler(self, name, method_group)
@@ -334,7 +329,6 @@ class ServerConnection:
         log.debug('La entrada de datos de %s se ha iniciado.' % self.base.name)
         while self.connected is True:
             try:
-                print 'entrada de datos!! Esperando...'
                 for line in self.socket.recvfrom(4028)[0].splitlines():
                     # Registrando cada linea
                     if plaintext:

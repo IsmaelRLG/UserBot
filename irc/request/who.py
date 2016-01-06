@@ -8,12 +8,9 @@ class who(request):
 
     @cache.memory
     def execute(self):
-        print 'llamada iniciada'
         self.irc.who(self.target)
-        print 'finalizo'
 
     def whoreply(self, group):
-        print 'recibiendo....'
         multi = group('line').split(' ', 7)
         channel, user, host, server, nick, s, hopcount, realname = multi
 
@@ -31,7 +28,6 @@ class who(request):
         return True
 
     def endofwho(self, group):
-        print 'finalizo todo'
         if group('name').lower() != self.target:
             raise UnboundLocalError
         if len(self.queue) == 0:

@@ -218,7 +218,7 @@ def mask2patt(string):
 
 
 def val_mask(mask):
-    return bool(re.match('.{1,}!.{1,}@.{1,}|\$[a-z]:.*', mask))
+    return bool(re.match('.{1,}!.{1,}@.{1,}|\$[a-z]:.+', mask))
 
 
 def make_nick_ls(irc, channel, mask):

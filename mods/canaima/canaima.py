@@ -3,6 +3,7 @@
 import re
 import json
 
+to_kick = []
 conf = json.loads(file('mods/canaima/config.json').read())
 
 
@@ -30,42 +31,61 @@ from irc.handlers import handler
 from irc.connection import servers as base
 
 
-@handler('privmsg notice join')
+@handler('privmsg notice join rpl_whoreply rpl_endofwho')
 #@thread(no_class=True, n='moderador')
 def pipe(self, event, group):
+    event = event.lower()
+    if event == 'rpl_whoreply':
+        multi = group('line').lower().split(' ', 7)
+        channel, user, host, server, nick, s, hopcount, realname = multi
+        if channel != conf["channel"].lower():
+            raise UnboundLocalError("it is not the required event")
+        for _host, message in to_kick:
+            if _host == host and nick != self.base.nick.lower():
+                self.kick(conf["channel"], nick, message)
+        return True
+    elif event == 'rpl_endofwho':
+        if len(to_kick) > conf['count_limit']:
+            for obj in to_kick:
+                to_kick.remove(obj)
+        return True
+
     if group('host') in conf['ignore']:
         raise UnboundLocalError("it is not the required event")
 
-    if group('target').lower() != conf['channel']:
-        if group('target').lower() == self.base.nick.lower():
-            if badwords(self, *group('nick', 'host', 'message')):
-                return True
-        raise UnboundLocalError("it is not the required event")
-    else:
-        if event.lower() == 'join':
+    if event == 'join':
+        if group('channel').lower() == conf['channel']:
             self.privmsg(group('nick'), conf['welcome'])
             self.privmsg(group('nick'), conf['example'])
             return True
+        else:
+            raise UnboundLocalError("it is not the required event")
 
-        if badwords.func(self, *group('nick', 'host', 'message')):
+    if group('target').lower() != conf['channel']:
+        if group('target').lower() == self.base.nick.lower():
+            if badwords.func(self, *group('nick', 'host', 'message')):
+                return True
+        raise UnboundLocalError("it is not the required event")
+    else:
+        if noflood.func(self, *group('nick', 'host', 'message')):
+            return True
+        elif badwords.func(self, *group('nick', 'host', 'message')):
+            return True
+        elif nodata.func(self, *group('nick', 'host', 'message')):
             return True
         elif noupper.func(self, *group('nick', 'host', 'message')):
             return True
         elif norepeat.func(self, *group('nick', 'host', 'message')):
             return True
-        elif nodata.func(self, *group('nick', 'host', 'message')):
-            return True
-        elif noflood.func(self, *group('nick', 'host', 'message')):
-            return True
         else:
-            if badwords(self, *group('nick', 'host', 'nick')):
+            if badwords.func(self, *group('nick', 'host', 'nick')):
                 return True
-            elif nodata(self, *group('nick', 'host', 'nick')):
+            elif nodata.func(self, *group('nick', 'host', 'nick')):
                 return True
 
 
-@commands.addHandler('canaima', 'canaima (?P<command>add|del|ignore|unignore|on|off|reload)( (?P<optional>[^ ]+))?', {
-    'sintax': 'canaima <on|off|add|del|ignore|unignore|reload>',
+@commands.addHandler('canaima', 'canaima (?P<command>add|del|ignore|unignore|on|off|reload|oper)( (?P<optional>[^ ]+))?', {
+    'sintax': 'canaima <on|off|add|del|ignore|unignore|reload|oper>',
     'example': 'canaima ignore localhost',
     'desc': 'comando especial de moderacion para canaima'},
     registered=True,
@@ -147,6 +167,19 @@ def canaima(irc, result, group, other):
         badwords.load()
         nodata.load()
         irc.notice(conf['channel'], 'recargado correctamente!')
+        return
+
+    if command == 'oper':
+        if option is None:
+            irc.notice(conf['channel'], 'error no ingreso el parametro')
+            return
+
+        if option in conf['opers']:
+            conf['opers'].remove(option)
+            irc.notice(conf['channel'], 'operador %s removido!' % option)
+        else:
+            conf['opers'].append(option)
+            irc.notice(conf['channel'], 'operador %s agregado!' % option)
         return
 
 

@@ -19,7 +19,7 @@ class commands(object):
 
     def __init__(self):
         self.modules = {}
-        #self.endless_process()
+        self.endless_process()
         self.lang = core.obtconfig('lang', cache=True)
 
     def __getitem__(self, key):

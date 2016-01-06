@@ -57,7 +57,9 @@ def main():
 
         from irc.connection import load_connections as load
         load()
-        commands.endless_process()
+
+        from irc.center import schemode
+        schemode.start_jobs()
 
     elif sys.argv[1] == '--help':
         #os.chdir(PATH)
