@@ -2,9 +2,11 @@
 
 import re
 import json
+import urllib
 
 to_kick = []
-conf = json.loads(file('mods/canaima/config.json').read())
+stats = json.load(file('mods/canaima/stats.json'))
+conf = json.load(file('mods/canaima/config.json'))
 
 
 def encode_dict(dictionary):
@@ -57,6 +59,43 @@ def pipe(self, event, group):
         if group('channel').lower() == conf['channel']:
             self.privmsg(group('nick'), conf['welcome'])
             self.privmsg(group('nick'), conf['example'])
+
+            host = group('host')
+            try:
+                page = urllib.urlopen('http://freegeoip.net/json/' + host)
+                results = json.loads(page)
+            except:
+                return True
+
+            if results:
+                for param in results:
+                    if not results[param]:
+                        results[param] = 'unknow'
+
+                country = 'unknow'
+                if 'country_name' in results:
+                    country = results['country_name'].lower()
+                    if not country in stats:
+                        stats[country] = {'total': 1, 'estados': {}}
+                    else:
+                        stats[country]['total'] += 1
+
+                state = 'unknow'
+                if 'region_name' in results:
+                    state = results['region_name'].lower()
+                    if not state in stats[country]['estados']:
+                        stats[country]['estados'][state] = {'total': 1, 'ciudades': {}}
+                    else:
+                        stats[country]['estados'][state]['total'] += 1
+
+                city = 'unknow'
+                if 'city' in results:
+                    city = results['city'].lower()
+                    if not city in stats[country]['estados'][state]['ciudades']:
+                        stats[country]['estados'][state]['ciudades'][city] = {'total': 0}
+                    else:
+                        stats[country]['estados'][state]['ciudades'][city]['total'] += 1
+            json.dump(stats, file('mods/canaima/stats.json', 'w'))
             return True
         else:
             raise UnboundLocalError("it is not the required event")
@@ -84,7 +123,8 @@ def pipe(self, event, group):
                 return True
 
 
-@commands.addHandler('canaima', 'canaima (?P<command>add|del|ignore|unignore|on|off|reload|oper)( (?P<optional>[^ ]+))?', {
+@commands.addHandler('canaima', 'canaima (?P<command>add|del|ignore|unignore|'
+    'on|off|reload|oper|stats)( (?P<optional>[^ ]+))?', {
     'sintax': 'canaima <on|off|add|del|ignore|unignore|reload|oper>',
     'example': 'canaima ignore localhost',
     'desc': 'comando especial de moderacion para canaima'},
@@ -182,6 +222,37 @@ def canaima(irc, result, group, other):
             irc.notice(conf['channel'], 'operador %s agregado!' % option)
         return
 
+    if command == 'stats':
+        if option is None:
+            irc.notice(conf['channel'], 'error no ingreso el parametro')
+            return
+
+        if option == 'badboys':
+            msg = 'Hasta ahora... '
+            msg += '%d han dicho malas palabras, '
+            msg += '%d han hecho flood, '
+            msg += '%d han compartido o solicitado datos personales, '
+            msg += '%d han usado excesivamente una misma letra, '
+            msg += '%d han usado mayusculas.'
+            msg = msg % (
+                len(badwords.RELAPSE),
+                len(noflood.RELAPSE),
+                len(nodata.RELAPSE),
+                len(norepeat.RELAPSE),
+                len(noupper.RELAPSE))
+            irc.notice(conf['channel'], msg)
+            return
+
+        if option == 'ip':
+            ch = conf['channel']
+            irc.notice('estadisticas de pais/estado/ciudad')
+            for pais, item in stats.items():
+                irc.notice(ch, '%s - %d' % (pais, item['total']))
+                for estado, e_item in item['estados'].items():
+                    irc.notice(ch, '  \342\212\242 %s - %d' % (estado, e_item['total']))
+                    for ciudad, c_item in e_item['ciudades'].items():
+                        irc.notice(ch, '    \342\212\242 %s - %d' % (ciudad, c_item['total']))
+            return
 
 @commands.addHandler('canaima', 'can(a)?i(a)?ma-ayuda( (?P<command>.*))?', {
     'sintax': 'canaima-ayuda <mensaje>',
