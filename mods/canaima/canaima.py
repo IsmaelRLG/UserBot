@@ -249,9 +249,34 @@ def canaima(irc, result, group, other):
             for pais, item in stats.items():
                 irc.notice(ch, '%s - %d' % (pais, item['total']))
                 for estado, e_item in item['estados'].items():
-                    irc.notice(ch, '  \342\212\242 %s - %d' % (estado, e_item['total']))
+                    msg = '  \342\212\242 %s - %d' % (estado, e_item['total'])
+                    try:
+                        irc.notice(ch, msg)
+                    except UnicodeEncodeError:
+                        try:
+                            irc.notice(ch, msg.decode('utf-8'))
+                        except UnicodeDecodeError:
+                            irc.notice(ch, r'%s' % msg)
+                    except UnicodeDecodeError:
+                        try:
+                            irc.notice(ch, msg.encode('utf-8'))
+                        except UnicodeEncodeError:
+                            irc.notice(ch, r'%s' % msg)
+
                     for ciudad, c_item in e_item['ciudades'].items():
-                        irc.notice(ch, '    \342\212\242 %s - %d' % (ciudad, c_item['total']))
+                        msg = '    \342\212\242 %s - %d' % (ciudad, c_item['total'])
+                        try:
+                            irc.notice(ch, msg)
+                        except UnicodeEncodeError:
+                            try:
+                                irc.notice(ch, msg.decode('utf-8'))
+                            except UnicodeDecodeError:
+                                irc.notice(ch, r'%s' % msg)
+                        except UnicodeDecodeError:
+                            try:
+                                irc.notice(ch, msg.encode('utf-8'))
+                            except UnicodeEncodeError:
+                                irc.notice(ch, r'%s' % msg)
             return
 
 @commands.addHandler('canaima', 'can(a)?i(a)?ma-ayuda( (?P<command>.*))?', {
