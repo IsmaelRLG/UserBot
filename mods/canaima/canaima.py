@@ -63,7 +63,7 @@ def pipe(self, event, group):
             host = group('host')
             try:
                 page = urllib.urlopen('http://freegeoip.net/json/' + host)
-                results = json.loads(page)
+                results = json.loads(page.read())
             except:
                 return True
 
