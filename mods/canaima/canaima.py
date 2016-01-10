@@ -123,8 +123,8 @@ def pipe(self, event, group):
                 return True
 
 
-@commands.addHandler('canaima', 'canaima (?P<command>add|del|ignore|unignore|'
-    'on|off|reload|oper|stats)( (?P<optional>[^ ]+))?', {
+@commands.addHandler('canaima', 'canaima( (?P<channel>#[^ ]+))? (?P<command>add'
+    '|del|ignore|unignore|on|off|reload|oper|stats)( (?P<optional>[^ ]+))?', {
     'sintax': 'canaima <on|off|add|del|ignore|unignore|reload|oper>',
     'example': 'canaima ignore localhost',
     'desc': 'comando especial de moderacion para canaima'},
@@ -132,7 +132,8 @@ def pipe(self, event, group):
     logged=True,
     channels=True,
     chn_registered=True,
-    privs='o')
+    privs='o',
+    chan_reqs='channel')
 def canaima(irc, result, group, other):
     command = result('command').lower()
     option = result('optional')
@@ -244,40 +245,28 @@ def canaima(irc, result, group, other):
             return
 
         if option == 'ip':
-            ch = conf['channel']
-            irc.notice('estadisticas de pais/estado/ciudad')
+            ch = other['target']
+            irc.notice(ch, 'estadisticas de pais/estado/ciudad')
             for pais, item in stats.items():
+                if isinstance(pais, unicode):
+                    pais = pais.encode('utf-8')
+
                 irc.notice(ch, '%s - %d' % (pais, item['total']))
                 for estado, e_item in item['estados'].items():
+                    if isinstance(estado, unicode):
+                        estado = estado.encode('utf-8')
+
                     msg = '  \342\212\242 %s - %d' % (estado, e_item['total'])
-                    try:
-                        irc.notice(ch, msg)
-                    except UnicodeEncodeError:
-                        try:
-                            irc.notice(ch, msg.decode('utf-8'))
-                        except UnicodeDecodeError:
-                            irc.notice(ch, r'%s' % msg)
-                    except UnicodeDecodeError:
-                        try:
-                            irc.notice(ch, msg.encode('utf-8'))
-                        except UnicodeEncodeError:
-                            irc.notice(ch, r'%s' % msg)
+                    irc.notice(ch, msg)
 
                     for ciudad, c_item in e_item['ciudades'].items():
+                        if isinstance(ciudad, unicode):
+                            ciudad = ciudad.encode('utf-8')
+
                         msg = '    \342\212\242 %s - %d' % (ciudad, c_item['total'])
-                        try:
-                            irc.notice(ch, msg)
-                        except UnicodeEncodeError:
-                            try:
-                                irc.notice(ch, msg.decode('utf-8'))
-                            except UnicodeDecodeError:
-                                irc.notice(ch, r'%s' % msg)
-                        except UnicodeDecodeError:
-                            try:
-                                irc.notice(ch, msg.encode('utf-8'))
-                            except UnicodeEncodeError:
-                                irc.notice(ch, r'%s' % msg)
+                        irc.notice(ch, msg)
             return
+
 
 @commands.addHandler('canaima', 'can(a)?i(a)?ma-ayuda( (?P<command>.*))?', {
     'sintax': 'canaima-ayuda <mensaje>',
