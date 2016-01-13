@@ -7,7 +7,7 @@ from irc.connection import servers as base
 
 import time
 
-__uptime__ = tuple(time.localtime())
+__uptime__ = time.time()
 locale = i18n.turn(
     'es',
     core.obtconfig('package_translate', cache=True),
@@ -385,12 +385,6 @@ def execute(irc, result, group, other):
     registered=True,
     logged=True)
 def uptime(irc, result, group, other):
-    def res_posc(pos1, pos2):
-        if pos1 > pos2:
-            return pos1 - pos2
-        else:
-            return pos2 - pos1
-
     def servers(serv=None, ircobj=None, ch=None, usr=None, opers=None):
         ls = []
         for servername, l, in base.items():
@@ -413,15 +407,38 @@ def uptime(irc, result, group, other):
         return len(ls)
 
     # Time zone
-    now = tuple(time.localtime())
-    year  = res_posc(now[0], __uptime__[0])
-    month = res_posc(now[1], __uptime__[1])
-    day   = res_posc(now[2], __uptime__[2])
-    hours = res_posc(now[3], __uptime__[3])
-    mins  = res_posc(now[4], __uptime__[4])
-    secs  = res_posc(now[5], __uptime__[5])
+    year = 0
+    month = 0
+    day = 0
+    hours = 0
+    mins = 0
+    secs = 0
+    future = time.time() - __uptime__
+    while 1:
+        if future > 377395200:
+            year += 1
+            future -= 377395200
+            continue
+        if future > 31449600:
+            month += 1
+            future -= 31449600
+            continue
+        if future > 86400:
+            day += 1
+            future -= 86400
+            continue
+        elif future > 3600:
+            hours += 1
+            future -= 3600
+            continue
+        elif future > 60:
+            mins += 1
+            future -= 60
+            continue
+        else:
+            secs += future
+            break
 
-    print secs
     # Thread zone
     from sysb import Thread
     import threading
