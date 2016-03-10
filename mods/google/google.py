@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+UserBot module
+Copyright 2015, Ismael R. Lugo G.
+"""
 
 import json
 import random
@@ -7,7 +11,6 @@ import urllib
 import urllib2
 
 from sysb.config import core
-from sysb import commands
 from sysb import i18n
 
 locale = i18n.turn(
@@ -19,13 +22,8 @@ lang = core.obtconfig('lang', cache=True)
 c5d = "\2\312G\304o\308o\312g\303l\304e\3\2: "
 
 
-@commands.addHandler('google', 'img|imagen (?P<text2find>.*)?', {
-    'sintax': 'img <text to find>',
-    'example': 'img cats',
-    'desc': _('muestra una imagen de algo', lang)},
-    anyuser=True)
 def images(irc, result, group, other):
-    quote = urllib.quote_plus(result('text2find'))
+    quote = urllib.quote(result('text2find'))
     ip = socket.gethostbyname(socket.gethostname())
     size = "imgsz=small|medium|large|xlarge"
     filetype = "png|jpg|gif"
@@ -42,14 +40,9 @@ def images(irc, result, group, other):
     irc.notice(other['target'], c5d + "\311" + result)
 
 
-@commands.addHandler('google', 'google|gl|search (?P<text2find>.*)?', {
-    'sintax': 'google <text to find>',
-    'example': 'google google',
-    'desc': _('busca algo en google', lang)},
-    anyuser=True)
 def search(irc, result, group, other):
     url = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&%s"
-    url = url % urllib.quote_plus(result('text2find'))
+    url = url % urllib.quote(result('text2find'))
     result = json.loads(urllib.urlopen(url)['responseData']['results'])
 
     for one in result:

@@ -48,7 +48,10 @@ class output(object):
                 out.update({'msg': textwrap.wrap(out['msg'], 507)[0] + '...'})
 
             try:
-                out['socket'].send(out['msg'] + '\r\n')
+                msg = out['msg']
+                if isinstance(msg, unicode):
+                    msg = msg.encode('utf-8')
+                out['socket'].send(msg + '\r\n')
             except socket.error:
                 # Ouch!
                 out['disconnect']("Connection reset by peer.")

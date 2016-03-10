@@ -25,6 +25,8 @@ global_handler(err_not_registered_nicknameinuse)
 global_handler(ctcp_ping)
 global_handler(confirm_join_part)
 global_handler(kickme)
+global_handler(need_op)
+global_handler(useronchannel)
 #global_handler(kick_rejoin)
 
 

@@ -4,6 +4,7 @@ import cPickle
 import database
 import time
 import logg
+import ConfigParser
 
 log = logg.getLogger(__name__)
 
@@ -40,6 +41,7 @@ class config(database.ownbot):
 
             #res = None
             try:
+                #log.info('SQL Step: ' + str(relapse))
                 res = self.select('core', 'pick', 'id="%s"' % name)[0]
                 res = cPickle.loads(res.encode('utf-8'))
             except (IndexError, TypeError, self.ProgrammingError):
@@ -81,5 +83,11 @@ class config(database.ownbot):
         self.update('core',
                     """ pick="%s" """ % cPickle.dumps(_object),
                     "id='%s'" % name)
+
+
+def conf(filename):
+    confg = ConfigParser.ConfigParser()
+    confg.read(filename)
+    return confg
 
 core = config()

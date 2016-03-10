@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+UserBot module
+Copyright 2015, Ismael R. Lugo G.
+"""
 
 from canaima import conf
 from canaima import to_kick
@@ -26,7 +30,7 @@ def func(irc, nick, host, message):
         else:
             l += 1
 
-    if float(u) >= (float(u + l + n) * conf['noupper']['porcent']) / float(100):
+    if float(u) >= conf['noupper']['porcent'] % float(u + l + n):
             if not host in RELAPSE:
                 RELAPSE[host] = 1
             else:

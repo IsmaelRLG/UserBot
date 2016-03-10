@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
+"""
+UserBot module
+Copyright 2015, Ismael R. Lugo G.
+"""
 
 import urllib2
 import json
 
-from sysb import commands
 from sysb import i18n
 from sysb.config import core
 from irc.request import whois
@@ -131,11 +134,6 @@ def translate(input, output, text, n=1):
         return result['responseData']['translatedText'].encode('UTF-8')
 
 
-@commands.addHandler('translate', '(tr|translate) (?P<in>[^ ]+) (?P<out>[^ ]+) (?P<text>.*)', {
-    'sintax': 'tr <input> <output> <text>',
-    'example': 'tr en es Hello!',
-    'desc': _('Traduce un texto de un idioma a otro', lang)},
-    anyuser=True)
 def translate2_1(irc, result, group, other):
     input, output, text = result('in', 'out', 'text')
     rpl = whois(irc, group('nick'))
@@ -155,14 +153,10 @@ def translate2_1(irc, result, group, other):
         irc.err(target, _('codigo de lenguaje invalido: %s', lc) % input)
         return
 
-    irc.notice(target, '(%s -> %s): %s' % (input, output, translate(input, output, text)))
+    irc.notice(target, '(%s -> %s): %s' %
+    (input, output, translate(input, output, text)))
 
 
-@commands.addHandler('translate', '(tr|translate)2 (?P<in>[^ ]+) (?P<out>[^ ]+) (?P<text>.*)', {
-    'sintax': 'tr2 <input> <output> <text>',
-    'example': 'tr2 en es Hello!',
-    'desc': _('Traduce un texto de un idioma a otro', lang)},
-    anyuser=True)
 def translate2_2(irc, result, group, other):
     input, output, text = result('in', 'out', 'text')
     rpl = whois(irc, group('nick'))
@@ -182,4 +176,5 @@ def translate2_2(irc, result, group, other):
         irc.err(target, _('codigo de lenguaje invalido: %s', lc) % input)
         return
 
-    irc.notice(target, '(%s -> %s): %s' % (input, output, translate(input, output, text, 2)))
+    irc.notice(target, '(%s -> %s): %s' %
+    (input, output, translate(input, output, text, 2)))

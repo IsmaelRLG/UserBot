@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+"""
+UserBot module
+Copyright 2015, Ismael R. Lugo G.
+"""
 
 from sysb.config import core
-from sysb import commands
 from sysb import i18n
 from irc.connection import servers as base
 
@@ -13,14 +16,6 @@ _ = locale.turn_tr_str
 lang = core.obtconfig('lang', cache=True)
 
 
-@commands.addHandler('channels', 'chan register( (?P<channel>[^ ]+))?', {
-    'sintax': 'chan register <channel>?',
-    'example': 'chan register #Foo',
-    'desc': _('registra un canal en el bot', lang)},
-    registered=True,
-    logged=True,
-    channels=True,
-    chan_reqs='channel')
 def register(irc, result, group, other):
     account = other['rpl_whois']['is logged'].lower()
     lc = base[irc.base.name][1][account]['lang']
@@ -37,17 +32,6 @@ def register(irc, result, group, other):
         irc.notice(other['target'], _('canal registrado correctamente', lc))
 
 
-@commands.addHandler('channels', 'chan flags( (?P<channel>#[^ ]+))? (?P<target>[^'
-    ' ]+) (?P<flags>[^ ]+)',{
-    'sintax': 'chan flags <channel>? <target> <flags>',
-    'example': 'chan flags #Foo-chan foo-user OP',
-    'desc': _('(añade / elimina / edita / muestra) los flags', lang)},
-    registered=True,
-    logged=True,
-    channels=True,
-    chn_registered=True,
-    privs='s',
-    chan_reqs='channel')
 def flags(irc, result, group, other):
     lc = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
     if result('target', 'flags') == ('*', '*'):
@@ -94,16 +78,6 @@ def flags(irc, result, group, other):
         " [%s] - (%s) >> (%s)" % (result('target'), before, after))
 
 
-@commands.addHandler('channels', 'chan drop( (?P<channel>#[^ ]+))?', {
-    'sintax': 'chan drop <channel>?',
-    'example': 'chan drop #foo',
-    'desc': _('elimina un canal del bot', lang)},
-    registered=True,
-    logged=True,
-    channels=True,
-    chn_registered=True,
-    privs='F',
-    chan_reqs='channel')
 def drop(irc, result, group, other):
     lc = base[irc.base.name][1][other['rpl_whois']['is logged']]['lang']
     del base[irc.base.name][2][other['channel']]

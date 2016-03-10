@@ -1,234 +1,239 @@
 # -*- coding: utf-8 -*-
+"""
+UserBot module
+Copyright 2015, Ismael R. Lugo G.
+"""
 
 import re
 import json
+import time
 import urllib
 
+from irc.handlers import method_handler as handler
+from irc.connection import global_handler
+from irc.client import ServerConnection as __irc__
+
+# Zona de variables
 to_kick = []
-stats = json.load(file('mods/canaima/stats.json'))
+genl = {}
 conf = json.load(file('mods/canaima/config.json'))
+stats = json.load(file('mods/canaima/stats.json'))
 
 
-def encode_dict(dictionary):
-    for key, items in dictionary.items():
-        if isinstance(key, unicode):
-            key = key.encode('utf-8')
-        if isinstance(items, unicode):
-            items = items.encode('utf-8')
-        elif isinstance(items, dict):
-            encode_dict(items)
-        del dictionary[key]
-        dictionary.update({key: items})
-
-encode_dict(conf)
-
+# Zona de importacion
 import badwords
+reload(badwords)
+
 import nodata
+reload(nodata)
+
 import noupper
+reload(noupper)
+
 import noflood
+reload(noflood)
+
 import norepeat
-
-from sysb import commands
-from irc.handlers import handler
-from irc.connection import servers as base
+reload(norepeat)
 
 
-@handler('privmsg notice join rpl_whoreply rpl_endofwho')
-#@thread(no_class=True, n='moderador')
-def pipe(self, event, group):
-    event = event.lower()
-    if event == 'rpl_whoreply':
-        multi = group('line').lower().split(' ', 7)
-        channel, user, host, server, nick, s, hopcount, realname = multi
-        if channel != conf["channel"].lower():
-            raise UnboundLocalError("it is not the required event")
-        for _host, message in to_kick:
-            if _host == host and nick != self.base.nick.lower():
-                self.kick(conf["channel"], nick, message)
-        return True
-    elif event == 'rpl_endofwho':
-        if len(to_kick) > conf['count_limit']:
-            for obj in to_kick:
-                to_kick.remove(obj)
-        return True
+class canaima:
 
-    if group('host') in conf['ignore']:
-        raise UnboundLocalError("it is not the required event")
+    def __init__(self):
+        if conf['switch'] == 'on':
+            self.addpipe()
 
-    if event == 'join':
-        if group('channel').lower() == conf['channel']:
-            self.privmsg(group('nick'), conf['welcome'])
-            self.privmsg(group('nick'), conf['example'])
+    def saveconfig(self):
+        json.dump(conf, file('mods/canaima/config.json', 'w'), indent=4)
 
-            host = group('host')
-            try:
-                page = urllib.urlopen('http://freegeoip.net/json/' + host)
-                results = json.loads(page.read())
-            except:
-                return True
+    def pipe_status(self):
+        return self.pipe in __irc__.global_handlers[0]
 
-            if results:
-                for param in results:
-                    if not results[param]:
-                        results[param] = 'unknow'
+    def addpipe(self):
+        if not self.pipe_status():
+            global_handler(self.pipe)
+            conf['switch'] = 'on'
+            self.saveconfig()
+            return True
+        return False
 
-                country = 'unknow'
-                if 'country_name' in results:
-                    country = results['country_name'].lower()
-                    if not country in stats:
-                        stats[country] = {'total': 1, 'estados': {}}
-                    else:
-                        stats[country]['total'] += 1
+    def delpipe(self):
+        if self.pipe_status():
+            __irc__.global_handlers[0].remove(self.pipe)
+            conf['switch'] = 'off'
+            self.saveconfig()
+            return True
+        return False
 
-                state = 'unknow'
-                if 'region_name' in results:
-                    state = results['region_name'].lower()
-                    if not state in stats[country]['estados']:
-                        stats[country]['estados'][state] = {'total': 1, 'ciudades': {}}
-                    else:
-                        stats[country]['estados'][state]['total'] += 1
+    def geoip(self, host):
+        page = urllib.urlopen('http://freegeoip.net/json/' + host)
+        results = json.loads(page.read())
 
-                city = 'unknow'
-                if 'city' in results:
-                    city = results['city'].lower()
-                    if not city in stats[country]['estados'][state]['ciudades']:
-                        stats[country]['estados'][state]['ciudades'][city] = {'total': 0}
-                    else:
-                        stats[country]['estados'][state]['ciudades'][city]['total'] += 1
+        for param in results:
+            if not results[param]:
+                results[param] = 'unknow'
+
+            country = 'unknow'
+            if 'country_name' in results:
+                country = results['country_name'].lower()
+                if not country in stats:
+                    stats[country] = {'total': 1, 'estados': {}}
+                else:
+                    stats[country]['total'] += 1
+
+            state = 'unknow'
+            if 'region_name' in results:
+                state = results['region_name'].lower()
+                if not state in stats[country]['estados']:
+                    stats[country]['estados'][state] = {'total': 1, 'ciudades': {}}
+                else:
+                    stats[country]['estados'][state]['total'] += 1
+
+            city = 'unknow'
+            if 'city' in results:
+                city = results['city'].lower()
+                if not city in stats[country]['estados'][state]['ciudades']:
+                    stats[country]['estados'][state]['ciudades'][city] = {'total': 0}
+                else:
+                    stats[country]['estados'][state]['ciudades'][city]['total'] += 1
             json.dump(stats, file('mods/canaima/stats.json', 'w'))
+
+    @handler('privmsg notice join rpl_whoreply rpl_endofwho')
+    def pipe(self, irc, event, group):
+        event = event.lower()
+
+        if event == 'rpl_whoreply':
+            multi = group('line').lower().split(' ', 7)
+            channel, user, host, server, nick, s, hopcount, realname = multi
+            if channel != conf["channel"].lower():
+                raise UnboundLocalError("it is not the required event")
+            for _host, message in to_kick:
+                if _host == host and nick != irc.base.nick.lower():
+                    irc.kick(conf["channel"], nick, message)
             return True
-        else:
+        elif event == 'rpl_endofwho':
+            if len(to_kick) > conf['count_limit']:
+                for obj in to_kick:
+                    to_kick.remove(obj)
+            return True
+
+        try:
+            host = group('host')
+            nick = group('nick')
+        except IndexError:
             raise UnboundLocalError("it is not the required event")
 
-    if group('target').lower() != conf['channel']:
-        if group('target').lower() == self.base.nick.lower():
-            if badwords.func(self, *group('nick', 'host', 'message')):
-                return True
-        raise UnboundLocalError("it is not the required event")
-    else:
-        if noflood.func(self, *group('nick', 'host', 'message')):
-            return True
-        elif badwords.func(self, *group('nick', 'host', 'message')):
-            return True
-        elif nodata.func(self, *group('nick', 'host', 'message')):
-            return True
-        elif noupper.func(self, *group('nick', 'host', 'message')):
-            return True
-        elif norepeat.func(self, *group('nick', 'host', 'message')):
-            return True
+        if host in conf['ignore']:
+            raise UnboundLocalError("it is not the required event")
+
+        if event == 'join':
+            if group('channel').lower() == conf['channel']:
+                irc.privmsg(nick, conf['welcome'])
+                irc.privmsg(nick, conf['example'])
+
+                if conf['geoip'] == 'enable':
+                    try:
+                        self.geoip(host)
+                    except:
+                        return True
+                    else:
+                        return True
+                else:
+                    return True
+
+        if event in ('privmsg', 'notice'):
+            target = group('target').lower()
+            message = group('message')
+            if target != conf['channel']:
+                if target == irc.base.nick.lower():
+                    if badwords.func(irc, nick, host, message):
+                        return True
+                    elif norepeat.func(irc, nick, host, message):
+                        return True
+                raise UnboundLocalError("it is not the required event")
+
+            else:
+                if noflood.func(irc, nick, host, message):
+                    return True
+                elif badwords.func(irc, nick, host, message):
+                    return True
+                elif nodata.func(irc, nick, host, message):
+                    return True
+                elif noupper.func(irc, nick, host, message):
+                    return True
+                elif norepeat.func(irc, nick, host, message):
+                    return True
+                else:
+                    if badwords.func(irc, nick, host, nick):
+                        return True
+                    elif nodata.func(irc, nick, host, nick):
+                        return True
+
+    def canaima_switch(self, irc, result, group, other):
+        switch = result('switch')
+        if switch == 'on':
+            if self.addpipe():
+                irc.notice(conf['channel'], 'moderador activado')
+            else:
+                irc.err(conf['channel'], 'moderador activado')
+        elif switch == 'off':
+            if self.delpipe():
+                irc.notice(conf['channel'], 'moderador desactivado')
+            else:
+                irc.err(conf['channel'], 'moderador desactivado')
+
+    def canaima_badwords(self, irc, result, group, other):
+        phrase = result('phrase')
+        switch = result('switch')
+        if switch == 'add':
+            try:
+                badwords.PATTERNS.append(re.compile(phrase, 2))
+            except:
+                irc.err(conf['channel'], 'al agregar la badword')
+            else:
+                irc.notice(conf['channel'], 'badword agregada correctamente')
+        elif switch == 'del':
+            try:
+                for pattern in badwords.PATTERNS:
+                    ok = False
+                    if pattern.match(phrase):
+                        ok = True
+                    elif pattern.pattern == phrase:
+                        ok = True
+
+                    if ok:
+                        badwords.PATTERNS.remove(pattern)
+                        irc.notice(conf['channel'],
+                        'expresion regular eliminada: ' + pattern.pattern)
+                raise ValueError
+            except:
+                irc.err(conf['channel'], 'al eliminar la badword')
+
+    def canaima_whitelist(self, irc, result, group, other):
+        host = result('hostname')
+
+        if host in conf['ignore']:
+            conf['ignore'].remove(host)
+            irc.notice(conf['channel'], '%s: removido' % host)
         else:
-            if badwords.func(self, *group('nick', 'host', 'nick')):
-                return True
-            elif nodata.func(self, *group('nick', 'host', 'nick')):
-                return True
+            conf['ignore'].append(host)
+            irc.notice(conf['channel'], '%s: agregado' % host)
+        self.saveconfig()
 
+    def canaima_oper(self, irc, result, group, other):
+        nick = result('nickname')
 
-@commands.addHandler('canaima', 'canaima( (?P<channel>#[^ ]+))? (?P<command>add'
-    '|del|ignore|unignore|on|off|reload|oper|stats)( (?P<optional>[^ ]+))?', {
-    'sintax': 'canaima <on|off|add|del|ignore|unignore|reload|oper>',
-    'example': 'canaima ignore localhost',
-    'desc': 'comando especial de moderacion para canaima'},
-    registered=True,
-    logged=True,
-    channels=True,
-    chn_registered=True,
-    privs='o',
-    chan_reqs='channel')
-def canaima(irc, result, group, other):
-    command = result('command').lower()
-    option = result('optional')
-    if command == 'on':
-        if 9 in irc.local_handlers and pipe in irc.local_handlers[9]:
-            pass
+        if nick in conf['opers']:
+            conf['opers'].remove(nick)
+            irc.notice(conf['channel'], 'operador %s removido!' % nick)
         else:
-            base[conf['server']][0].add_handler(pipe, 9, 'local')
-        irc.notice(conf['channel'], 'moderador activado')
-        return
+            conf['opers'].append(nick)
+            irc.notice(conf['channel'], 'operador %s agregado!' % nick)
+        self.saveconfig()
 
-    if command == 'off':
-        if 9 in irc.local_handlers and pipe in irc.local_handlers[9]:
-            del irc.local_handlers[9]
-        irc.notice(conf['channel'], 'moderador desactivado')
-        return
-
-    if command == 'add':
-        try:
-            badwords.PATTERNS.append(re.compile(option, 2))
-        except:
-            irc.notice(conf['channel'], 'error al agregar la badword')
-        else:
-            irc.notice(conf['channel'], 'badword agregada correctamente')
-        return
-
-    if command == 'del':
-        try:
-            for pattern in badwords.PATTERNS:
-                ok = False
-                if pattern.match(option):
-                    ok = True
-                elif pattern.pattern == option:
-                    ok = True
-
-                if ok:
-                    badwords.PATTERNS.remove(pattern)
-                    irc.notice(conf['channel'], 'expresion regular eliminada: ' + pattern.pattern)
-        except:
-            irc.notice(conf['channel'], 'error al agregar la badword')
-        return
-
-    if command == 'ignore':
-        if option is None:
-            irc.notice(conf['channel'], 'error no ingreso el parametro')
-            return
-
-        conf['ignore'].append(option)
-        irc.notice(conf['channel'], 'se agrego %s a la lista de ignorados' % option)
-        return
-
-    if command == 'unignore':
-        try:
-            conf['ignore'].remove(option)
-        except:
-            irc.notice(conf['channel'], 'error al eliminar %s de la lista de ignorados' % option)
-        else:
-            irc.notice(conf['channel'], 'se elimino %s de la lista de ignorados' % option)
-        return
-
-    if command == 'reload':
-        def clear(list):
-            while 1:
-                try:
-                    list.pop()
-                except IndexError:
-                    return
-
-        clear(badwords.PATTERNS)
-        clear(nodata.PATTERNS)
-
-        badwords.load()
-        nodata.load()
-        irc.notice(conf['channel'], 'recargado correctamente!')
-        return
-
-    if command == 'oper':
-        if option is None:
-            irc.notice(conf['channel'], 'error no ingreso el parametro')
-            return
-
-        if option in conf['opers']:
-            conf['opers'].remove(option)
-            irc.notice(conf['channel'], 'operador %s removido!' % option)
-        else:
-            conf['opers'].append(option)
-            irc.notice(conf['channel'], 'operador %s agregado!' % option)
-        return
-
-    if command == 'stats':
-        if option is None:
-            irc.notice(conf['channel'], 'error no ingreso el parametro')
-            return
-
-        if option == 'badboys':
+    def canaima_stats(self, irc, result, group, other):
+        stats = result('stats')
+        if stats == 'badboys':
             msg = 'Hasta ahora... '
             msg += '%d han dicho malas palabras, '
             msg += '%d han hecho flood, '
@@ -242,9 +247,8 @@ def canaima(irc, result, group, other):
                 len(norepeat.RELAPSE),
                 len(noupper.RELAPSE))
             irc.notice(conf['channel'], msg)
-            return
 
-        if option == 'ip':
+        elif stats == 'ip':
             ch = other['target']
             irc.notice(ch, 'estadisticas de pais/estado/ciudad')
             for pais, item in stats.items():
@@ -265,27 +269,30 @@ def canaima(irc, result, group, other):
 
                         msg = '    \342\212\242 %s - %d' % (ciudad, c_item['total'])
                         irc.notice(ch, msg)
+
+    def canaima_ayuda(self, irc, result, group, other):
+        mess = result('command')
+        host = group('host')
+        nick = group('nick')
+        target = other['target']
+        if not host in genl:
+            genl[host] = time.time()
+        elif (time.time - genl[host]) < 3600:
+            irc.privmsg(target, 'Ya hay una solicitud activa, espera un poco!')
+            return
+        else:
+            genl[host] = time.time()
+
+        if mess is None:
+            irc.privmsg(target, '¿No agregaste el mensaje de tu problema?')
+            mess = 'no especificado'
+
+        if len(mess) < 14:
+            irc.privmsg(target, conf['not'])
             return
 
+        for nick in conf['opers']:
+            irc.privmsg(nick, '%s tiene un problema: %s' % (nick, mess))
 
-@commands.addHandler('canaima', 'can(a)?i(a)?ma-ayuda( (?P<command>.*))?', {
-    'sintax': 'canaima-ayuda <mensaje>',
-    'example': 'canaima-ayuda ayudenme!!!! Pepe me esta pegando!!!',
-    'desc': 'comando especial de moderacion para canaima'},
-    anyuser=True)
-def ayuda(irc, result, group, other):
-    mess = result('command')
-    target = other['target']
-    if mess is None:
-        irc.privmsg(target, '¿Porque no agregaste el mensaje de tu problema?')
-        mess = 'no especificado'
-
-    if len(mess) < 14:
-        irc.privmsg(target, conf['not'])
-        return
-
-    for nick in conf['opers']:
-        irc.privmsg(nick, '%s tiene un problema: %s' % (group('nick'), mess))
-
-    irc.privmsg(target, 'se informo al personal de tu problema: ' + mess)
-    irc.privmsg(target, conf['okay'])
+        irc.privmsg(target, 'se informo al personal de tu problema: ' + mess)
+        irc.privmsg(target, conf['okay'])

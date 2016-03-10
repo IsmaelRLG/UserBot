@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
+"""
+UserBot module
+Copyright 2015, Ismael R. Lugo G.
+"""
 
 import re, os, imp, logg, types, Thread, traceback, i18n
 
 from config import core
+from config import conf
 from irc.client import buffer_input
 from irc.request import whois
 from irc.connection import servers
@@ -58,6 +63,28 @@ class commands(object):
                     continue
 
             elif os.path.isdir('mods/' + name):
+                if os.path.exists('mods/%s/module.ini' % name):
+                    config = conf('mods/%s/module.ini' % name)
+                    log.debug('%s: configuracion de modulo cargada' % name)
+                else:
+                    log.info('se salta "%s" (no es un modulo)' % name)
+                    continue
+                status = config.get('MODULE', 'status')
+                if status == 'enable':
+                    pass
+                elif status == 'disabled':
+                    if module:
+                        return 0
+                    else:
+                        log.debug('%s: modulo desabilitado' % name)
+                        continue
+                elif status == 'dev':
+                    if module:
+                        return 1
+                    else:
+                        log.debug('%s: modulo en desarrollo' % name)
+                        continue
+
                 __module__ = imp.find_module('mods/' + name)
 
             elif os.path.islink('mods/' + name):
@@ -98,27 +125,6 @@ class commands(object):
             self['help']['module'].make_cmls()
         except:
             pass
-
-    def reload_module(self, module):
-        if self[module]:
-            mod = self[module]['module']
-            del self.modules[module]
-            self.modules[module] = {'module': module, 'handlers': []}
-
-            try:
-                print str(mod)
-                self[module]['module'] = reload(mod)
-                try:
-                    self['help']['module'].make_cmls()
-                except:
-                    pass
-                return True
-            except:
-                log.error('el modulo %s contiene errores' % module)
-                error = traceback.format_exc().splitlines()
-                for err in error:
-                    log.error(err)
-                return error
 
     #======================================================================#
     #                         procesando comandos                          #
@@ -251,6 +257,7 @@ class commands(object):
                             break
 
                 if if_break:
+                    re.purge()
                     break
 
 commands = commands()

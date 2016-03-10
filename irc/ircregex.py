@@ -88,7 +88,7 @@ RPL_ENDOFMOTD = (_('376') + ":(End of /?MOTD command(\.)?|"
 
 # Error Replies
 
-ERR_NOSUCHNICK = _('401') + "(?P<nick>[^ ]+) :No such nick/channel"
+ERR_NOSUCHNICK = _('401') + "(?P<nick>[^ ]+) :(?P<message>.*)"
 ERR_NOSUCHSERVER = _('402') + '(?P<server>[^ ]+) :No such server'
 ERR_NOSUCHCHANNEL = _('403') + '(?P<channel>[^ ]+) :No such channel'
 ERR_CANNOTSENDTOCHAN = _('404') + "(?P<channel>[^ ]+) :Cannot send to channel"
@@ -136,7 +136,7 @@ ERR_USERNOTINCHANNEL = (_('441') + "(?P<nick>[^ ]+) (?P<channel>[^ ]+) "
     ":They aren't on that channel")
 ERR_NOTONCHANNEL = _('442') + "(?P<channel>[^ ]+) :You're not on that channel"
 ERR_USERONCHANNEL = (_('443') + "(?P<user>[^ ]+) (?P<channel>[^ ]+) :"
-    "is already on channel")
+    "(?P<message>.*)")
 ERR_NOLOGIN = _('444') + "(?P<user>[^ ]+) :User not logged in"
 ERR_NEEDMOREPARAMS = _('461') + "(?P<command>[^ ]+) :Not enough parameters"
 ERR_KEYSET = _('467') + "(?P<channel>[^ ]+) :Channel key already set"
@@ -148,8 +148,7 @@ ERR_BADCHANMASK = _('476') + "(?P<channel>[^ ]+) :Bad Channel Mask"
 ERR_NOCHANMODES = _('477') + "(?P<channel>[^ ]+) :Channel doesn't support modes"
 ERR_BANLISTFULL = (_('478') + "(?P<channel>[^ ]+) (?P<char>[^ ]+) :"
     "Channel list is full")
-ERR_CHANOPRIVSNEEDED = (_('482') +
-    "(?P<channel>[^ ]+) :You're not channel operator")
+ERR_CHANOPRIVSNEEDED = (_('482') + "(?P<channel>[^ ]+) :(?P<message>.*)")
 ERR_STD = (_('|'.join(['409', '412', '424', '431', '44[56]', '451', '46[2-5]',
     '481', '48[3-5', '491', '50[12]'])) + ':(?P<text>.*)')
 

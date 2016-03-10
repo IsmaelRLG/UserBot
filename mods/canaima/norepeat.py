@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+UserBot module
+Copyright 2015, Ismael R. Lugo G.
+"""
 
 from canaima import conf
 from canaima import to_kick

@@ -210,21 +210,29 @@ def ip_quad_to_numstr(quad):
 
 import re
 from irc.request import who
-patt = re.compile('.{1,}!.{1,}@.{1,}')
 
 
 def mask2patt(string):
-    return string.reaplce('*', '.*')
+    return string.replace('*', '.*')
 
 
 def val_mask(mask):
-    return bool(re.match('.{1,}!.{1,}@.{1,}|\$[a-z]:.+', mask))
+    return bool(re.match('.{1,}!.{1,}@.{1,}', mask))
 
 
-def make_nick_ls(irc, channel, mask):
-    __list__ = []
+def val_extban(mask):  # freenode
+    return bool(re.match('\$~?[ajrxz]:.*', mask))
+
+
+def make_nick_ls(irc, channel, mask, lower=None):
+    __list__ = [[], who(irc, channel)['list']]
     maskpatt = mask2patt(mask)
-    for user in who(irc, channel)['list']:
-        if re.match(maskpatt, '{}!{}@{}'.format(user[:3]), 2):
-            __list__.append(user[0])
+
+    for user in __list__[1]:
+        mask_ = '{}!{}@{}'.format(*user[:3])
+        if re.match(maskpatt, mask_, 2):
+            if lower:
+                __list__[0].append(user[0].lower())
+            else:
+                __list__[0].append(user[0])
     return __list__

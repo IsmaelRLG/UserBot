@@ -14,7 +14,7 @@ def method_handler(events):
             for event in events.upper().split():
                 if event == event_name:
                     log.debug('handler ejecutado: ' + method.__name__)
-                    return method(self, event_name, group)
+                    return method(self, irc, event_name, group)
 
             raise UnboundLocalError("it is not the required event")
         return wrapper
@@ -115,23 +115,15 @@ def registration_successful(self, name, group):
         self.join(channel['name'])
 
 
-@handler('err_nicknameinuse')
+@handler('err_nicknameinuse err_erroneusnickname')
 def err_not_registered_nicknameinuse(self, name, group):
     import random
 
-    rn = self.base.nick + '-' + str(random.choice(range(100000)))
+    rn = 'userbot' + '-' + str(random.choice(range(100000)))
     from client import log
-
-    try:
-        if self.registered is False:
-            self.nick(rn)
-        else:
-            return None
-    except AttributeError:
-        self.nick(rn)
-    finally:
-        log.info('nick en uso %s, cambiando por %s' % (self.base.nick, rn))
-        return True
+    self.nick(rn)
+    log.info('nick en uso o erroneo, cambiando por %s' % rn)
+    return True
 
 
 @handler('privmsg')
@@ -155,5 +147,13 @@ def confirm_join_part(self, name, group):
         return True
 
 
+@handler('err_chanoprivsneeded')
+def need_op(self, name, group):
+    self.err(*group('channel', 'message'))
+    return True
 
 
+@handler('err_useronchannel')
+def useronchannel(self, name, group):
+    self.err(group('channel'), '%s: %s' % group('user', 'message'))
+    return True
