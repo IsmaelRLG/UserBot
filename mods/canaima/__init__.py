@@ -23,8 +23,8 @@ commands.addHandler('canaima', 'canaima( (?P<channel>#[^ ]+))? switch '
     privs='o',
     chan_reqs='channel')(canaima.canaima_switch)
 
-commands.addHandler('canaima', 'canaima( (?P<channel>#[^ ]+))? badword '
-    '(?P<switch>add|del) (?P<phrase>.*)', {
+commands.addHandler('canaima', 'canaima( (?P<channel>#[^ ]+))? badword'
+    ' (?P<switch>add|del) (?P<phrase>.*)', {
     'sintax': 'canaima badword <add|del> <phrase|regex>',
     'example': 'canaima badword del canal',
     'desc': 'agrega o elimina alguna regex'},
@@ -47,7 +47,7 @@ commands.addHandler('canaima', 'canaima( (?P<channel>#[^ ]+))? whitelist'
     privs='o',
     chan_reqs='channel')(canaima.canaima_whitelist)
 
-commands.addHandler('canaima', 'canaima( (?P<channel>#[^ ]+))? staff '
+commands.addHandler('canaima', 'canaima( (?P<channel>#[^ ]+))? staff'
     ' (?P<nickname>[^ ]+)', {
     'sintax': 'canaima oper <nickname>',
     'example': 'canaima oper foonick',
@@ -59,7 +59,7 @@ commands.addHandler('canaima', 'canaima( (?P<channel>#[^ ]+))? staff '
     privs='t',
     chan_reqs='channel')(canaima.canaima_oper)
 
-commands.addHandler('canaima', 'canaima( (?P<channel>#[^ ]+))? stats '
+commands.addHandler('canaima', 'canaima( (?P<channel>#[^ ]+))? stats'
     ' (?P<stats>badboys|ip)', {
     'sintax': 'canaima stats <badboys|ip>',
     'example': 'canaima stats badboys',

@@ -40,6 +40,10 @@ reload(norepeat)
 class canaima:
 
     def __init__(self):
+        conf_decode = self.JSONDecoder(conf)
+        conf.clear()
+        conf.update(conf_decode)
+
         if conf['switch'] == 'on':
             self.addpipe()
 
@@ -48,6 +52,35 @@ class canaima:
 
     def pipe_status(self):
         return self.pipe in __irc__.global_handlers[0]
+
+    def JSONDecoder(self, confdict, codec='utf-8'):
+        SUB_Json = {}
+        for value, item in confdict.items():
+            if isinstance(value, unicode):
+                value = value.encode(codec)
+            if isinstance(item, unicode):
+                item = item.encode(codec)
+            if isinstance(item, dict):
+                item = self.JSONDecoder(item)
+            if isinstance(item, list):
+                for index in item:
+                    if isinstance(index, unicode):
+                        posc = item.index(index)
+                        item.remove(index)
+                        item.insert(posc, index.encode(codec))
+                        continue
+                    if isinstance(index, list):
+                        posc = item.index(index)
+                        item.remove(index)
+                        item.insert(posc, self.JSONDecoder({0: index})[0])
+                        continue
+                    if isinstance(index, dict):
+                        posc = item.index(index)
+                        item.remove(index)
+                        item.insert(posc, self.JSONDecoder(index))
+                        continue
+            SUB_Json[value] = item
+        return SUB_Json
 
     def addpipe(self):
         if not self.pipe_status():
@@ -146,9 +179,9 @@ class canaima:
             message = group('message')
             if target != conf['channel']:
                 if target == irc.base.nick.lower():
-                    if badwords.func(irc, nick, host, message):
+                    if badwords.func(irc, nick, host, message, pre=u'privmsg: '):
                         return True
-                    elif norepeat.func(irc, nick, host, message):
+                    elif norepeat.func(irc, nick, host, message, pre=u'privmsg: '):
                         return True
                 raise UnboundLocalError("it is not the required event")
 

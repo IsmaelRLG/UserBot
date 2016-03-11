@@ -19,7 +19,7 @@ def load():
         PATTERNS.append(re.compile(pattern, 2))
 
 
-def func(irc, nick, host, message):
+def func(irc, nick, host, message, pre=u''):
     if len(RELAPSE) > conf['count_limit']:
         RELAPSE.clear()
 
@@ -32,7 +32,7 @@ def func(irc, nick, host, message):
                     RELAPSE[host] += 1
 
                 if RELAPSE[host] < RELAPSE_LIMIT:
-                    irc.kick(conf['channel'], nick, conf['badwords']['warning'])
+                    irc.kick(conf['channel'], nick, pre + conf['badwords']['warning'])
                     irc.privmsg(nick, conf['warning'].format(nick=nick))
                     return True
                 else:
@@ -43,7 +43,7 @@ def func(irc, nick, host, message):
                         if host == _host:
                             to_kick.remove(tuple)
 
-                    to_kick.append((host.lower(), conf['badwords']['warning']))
+                    to_kick.append((host.lower(), pre + conf['badwords']['warning']))
                     irc.who(conf['channel'])
 
                     mode(irc.base.name, conf['channel'], '-b *!*@' + host, 86400)

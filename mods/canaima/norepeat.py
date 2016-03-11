@@ -12,7 +12,7 @@ RELAPSE = {}
 RELAPSE_LIMIT = conf['norepeat']['relapse_limit']
 
 
-def func(irc, nick, host, message):
+def func(irc, nick, host, message, pre=u''):
     last = []
     repeat = 0
     limit = conf['norepeat']['limit']
@@ -32,7 +32,7 @@ def func(irc, nick, host, message):
                     RELAPSE[host] += 1
 
                 if RELAPSE[host] < RELAPSE_LIMIT:
-                    msg = conf['warn'] + conf['norepeat']['warning']
+                    msg = conf['warn'] + pre + conf['norepeat']['warning']
                     msg = msg.format(nick=nick, relapse_num=RELAPSE[host])
                     irc.notice(conf['channel'], msg)
                     if (RELAPSE_LIMIT - RELAPSE[host]) == 1:
@@ -46,7 +46,7 @@ def func(irc, nick, host, message):
                         if host == _host:
                             to_kick.remove(tuple)
 
-                    to_kick.append((host.lower(), conf['norepeat']['warning']))
+                    to_kick.append((host.lower(), pre + conf['norepeat']['warning']))
                     irc.who(conf['channel'])
 
                     mode(irc.base.name, conf['channel'], '-b *!*@' + host, 86400)

@@ -1,9 +1,20 @@
 {
-    "ignore": [], 
+    "warn": "\u00a1 {nick} ! \u000305\u0002ADVERTENCIA\u0003\u0002 N-{relapse_num} - ", 
     "okay": "En breve se estar\u00e1 comunicando con usted alguien del personal que este activo, \u00a1ten paciencia! las personas que ayudan ac\u00e1 son voluntarios es decir, \u00a1No les pagan por esto! has varios intentos hasta que alg\u00fan miembro del personal se comunique con usted y le ayude! Unos tips, el personal esta m\u00e1s activo en la tarde por aproximadamente desde las 12 PM hasta las 6 PM en horario nocturno, despu\u00e9s de las 9 PM es poco probable que alguien te ayude :(", 
-    "geoip": "disabled", 
-    "count_limit": 250, 
     "welcome": "Bienvenido al canal de la comunidad de Canaima! Recuerda siempre cumplir las reglas del canal \u00bfNecesitas ayuda? \u00bfTu canaimita o la de alguien m\u00e1s tiene problemas? \u00bfNo tienes canaimita? \u00bfPero si tienes algo con Sistema Canaima? O quiz\u00e1s alguien te molesta, te dice groser\u00edas D: o \u00bfesta pidiendo algo que no se debe pedir? solicita ayuda del personal de Canaima! env\u00eda aqu\u00ed mismo \"canaima-ayuda\" seguido de tu problema, ejemplo de un mensaje: ", 
+    "norepeat": {
+        "warning": "Uso excesivo de una misma letra", 
+        "limit": 8, 
+        "relapse_limit": 2
+    }, 
+    "warning": "\u00a1Hola {nick}! Soy un robot y esto es un mensaje autom\u00e1tico, \u00bfparece que te estas portando mal? No contin\u00faes por favor :( o ser\u00e1s expulsado por un d\u00eda completo! Eso significa que no podr\u00e1s volver al chat hasta que se cumplan 24 horas! Esta es tu ultima advertencia. Y algo m\u00e1s, \u00a1NO RESPONDAS! Como dije: Soy un robot automatizado y no comprender\u00e9 nada de lo que digas", 
+    "noupper": {
+        "porcent": 75.0, 
+        "warning": "Evita el uso de las may\u00fasculas", 
+        "len_mini": 4, 
+        "relapse_limit": 2
+    }, 
+    "not": "\u00bfEsa raz\u00f3n es un poco corta no? No informare a los operadores con algo as\u00ed, has otro intento pero esta vez un poco mas detallado \u00bfok?", 
     "badwords": {
         "patterns": [
             "(.{1,})?(c{1,}o{1,}\u00f1{1,}o{1,})", 
@@ -49,28 +60,18 @@
         "warning": "Lenguaje vulgar, obsceno u ofensivo", 
         "relapse_limit": 2
     }, 
-    "server": "localhost", 
-    "norepeat": {
-        "warning": "Uso excesivo de una misma letra", 
-        "limit": 8, 
-        "relapse_limit": 2
-    }, 
-    "switch": "on", 
     "noflood": {
-        "relapse_limit": 5, 
+        "limit_l": 900, 
         "limit_r": 4, 
         "limit_t": 20, 
         "limit_m": 5, 
-        "limit_l": 900
+        "relapse_limit": 5
     }, 
-    "warn": "\u00a1 {nick} ! \u000305\u0002ADVERTENCIA\u0003\u0002 N-{relapse_num} - ", 
-    "not": "\u00bfEsa raz\u00f3n es un poco corta no? No informare a los operadores con algo as\u00ed, has otro intento pero esta vez un poco mas detallado \u00bfok?", 
-    "noupper": {
-        "porcent": 75.0, 
-        "warning": "Evita el uso de las may\u00fasculas", 
-        "len_mini": 4, 
-        "relapse_limit": 2
-    }, 
+    "geoip": "disabled", 
+    "count_limit": 250, 
+    "server": "localhost", 
+    "ignore": [], 
+    "switch": "on", 
     "opers": [], 
     "nodata": {
         "patterns": [
@@ -170,7 +171,6 @@
         "warning": "No debes compartir o solicitar datos personales", 
         "relapse_limit": 2
     }, 
-    "warning": "\u00a1Hola {nick}! Soy un robot y esto es un mensaje autom\u00e1tico, \u00bfparece que te estas portando mal? No contin\u00faes por favor :( o ser\u00e1s expulsado por un d\u00eda completo! Eso significa que no podr\u00e1s volver al chat hasta que se cumplan 24 horas! Esta es tu ultima advertencia. Y algo m\u00e1s, \u00a1NO RESPONDAS! Como dije: Soy un robot automatizado y no comprender\u00e9 nada de lo que digas", 
     "example": "canaima-ayuda quiero instalar google chrome y mi hermano me molesta", 
     "channel": "#canaima-social"
 }

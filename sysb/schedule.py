@@ -96,6 +96,12 @@ class irc_schedule:
                 self.process(base[ircname][0], jobls, epoch)
 
     def process(self, irc, jobls, epoch):
+        try:
+            if not irc.registered:
+                time.sleep(4)
+        except AttributeError:
+            time.sleep(4)
+
         for job in jobls:
             remove = False
             if epoch >= job['seconds']:

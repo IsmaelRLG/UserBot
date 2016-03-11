@@ -30,7 +30,10 @@ def func(irc, nick, host, message):
         else:
             l += 1
 
-    if float(u) >= conf['noupper']['porcent'] % float(u + l + n):
+    print((u, l, n), conf['noupper']['porcent'] % float(u + l),
+         conf['noupper']['porcent'], float(u + l),
+         float(u) >= conf['noupper']['porcent'] % float(u + l))
+    if float(u) >= (conf['noupper']['porcent'] % float(u + l)):
             if not host in RELAPSE:
                 RELAPSE[host] = 1
             else:
